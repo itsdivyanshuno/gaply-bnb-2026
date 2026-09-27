@@ -11,8 +11,16 @@ export default function SkillsPage() {
     prioritySkills: [],
   });
 
+  const [priorities, setPriorities] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [assessmentSkillId, setAssessmentSkillId] = useState('');
+  const [assessmentScore, setAssessmentScore] = useState('');
+  const [assessmentLoading, setAssessmentLoading] = useState(false);
+  const [assessmentError, setAssessmentError] = useState('');
+  const [assessmentResult, setAssessmentResult] = useState<any>(null);
 
   useEffect(() => {
     const loadSkills = async () => {
@@ -47,6 +55,8 @@ export default function SkillsPage() {
             prioritySkills: [],
           }
         );
+
+        setPriorities(data.priorities || []);
       } catch (err) {
         console.error('Failed to load skills:', err);
         setError('Failed to load skill analysis.');
@@ -57,6 +67,92 @@ export default function SkillsPage() {
 
     loadSkills();
   }, []);
+
+  async function submitAssessment() {
+    const storedUser = localStorage.getItem('gaply_user');
+
+    if (!storedUser) {
+      window.location.href = '/signin';
+      return;
+    }
+
+    if (!assessmentSkillId) {
+      setAssessmentError('Select a skill first.');
+      return;
+    }
+
+    const score = Number(assessmentScore);
+
+    if (!Number.isFinite(score) || score < 0 || score > 100) {
+      setAssessmentError('Enter a score between 0 and 100.');
+      return;
+    }
+
+    try {
+      const userData = JSON.parse(storedUser);
+
+      setAssessmentLoading(true);
+      setAssessmentError('');
+      setAssessmentResult(null);
+
+      const response = await fetch('/api/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentId: userData.id,
+          skillId: assessmentSkillId,
+          newProficiency: score,
+          confidence: 0.8,
+          description: 'Updated after a self-assessment',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data?.error === 'string'
+            ? data.error
+            : 'Assessment update failed.'
+        );
+      }
+
+      setAssessmentResult(data);
+
+      const refreshed = await fetch(
+        `/api/skills?studentId=${encodeURIComponent(userData.id)}`
+      );
+
+      if (refreshed.ok) {
+        const refreshedData = await refreshed.json();
+
+        setGapAnalysis(
+          refreshedData.analysis || {
+            targetRole: '',
+            overallReadiness: 0,
+            skillGaps: [],
+            prioritySkills: [],
+          }
+        );
+
+        setPriorities(refreshedData.priorities || []);
+      }
+
+      setAssessmentScore('');
+    } catch (err) {
+      console.error('Assessment update failed:', err);
+
+      setAssessmentError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to update assessment.'
+      );
+    } finally {
+      setAssessmentLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -89,7 +185,7 @@ export default function SkillsPage() {
 
   const readiness = Math.round(gapAnalysis.overallReadiness || 0);
   const skillGaps = gapAnalysis.skillGaps || [];
-  const prioritySkills = gapAnalysis.prioritySkills || [];
+  const prioritySkills = priorities;
 
   const strengths = skillGaps.filter((skill: any) => skill.gap >= 0);
   const gaps = skillGaps.filter((skill: any) => skill.gap < 0);
@@ -251,16 +347,16 @@ export default function SkillsPage() {
           </div>
 
           <div className="space-y-3">
-            {prioritySkills.map((skillId: any, index: number) => {
+            {prioritySkills.map((priority: any, index: number) => {
               const skill = skillGaps.find(
-                (item: any) => item.skillId === skillId
+                (item: any) => item.skillId === priority.skillId
               );
 
               if (!skill) return null;
 
               return (
                 <div
-                  key={skillId}
+                  key={priority.skillId}
                   className="group flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-indigo-100 hover:bg-indigo-50/40"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white shadow-sm">
@@ -294,6 +390,168 @@ export default function SkillsPage() {
         </section>
       )}
 
+      {/* Adaptive assessment */}
+      {skillGaps.length > 0 && (
+        <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-white shadow-sm">
+          <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 text-white md:p-7">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-400/20">
+                ↻
+              </div>
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-300">
+                  Adaptive career loop
+                </p>
+
+                <h3 className="mt-1 text-2xl font-bold tracking-tight">
+                  Update a skill. Let GAPLY recalculate your path.
+                </h3>
+
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                  Record a new assessment and GAPLY will compare your
+                  before/after proficiency, readiness and skill gap. This is
+                  the signal that drives your adaptive recommendations.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-3 md:grid-cols-[1fr_180px_auto]">
+              <select
+                value={assessmentSkillId}
+                onChange={(event) => {
+                  setAssessmentSkillId(event.target.value);
+                  setAssessmentError('');
+                  setAssessmentResult(null);
+                }}
+                className="rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white outline-none focus:border-indigo-400"
+              >
+                <option value="" className="text-slate-900">
+                  Select skill to reassess
+                </option>
+
+                {skillGaps.map((skill: any) => (
+                  <option
+                    key={skill.skillId}
+                    value={skill.skillId}
+                    className="text-slate-900"
+                  >
+                    {skill.skillName} · {skill.currentProficiency}/100
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={assessmentScore}
+                onChange={(event) => {
+                  setAssessmentScore(event.target.value);
+                  setAssessmentError('');
+                  setAssessmentResult(null);
+                }}
+                placeholder="New score"
+                className="rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-indigo-400"
+              />
+
+              <button
+                type="button"
+                onClick={() => void submitAssessment()}
+                disabled={assessmentLoading}
+                className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {assessmentLoading
+                  ? 'Recalculating...'
+                  : 'Update assessment →'}
+              </button>
+            </div>
+
+            {assessmentError && (
+              <p className="mt-3 text-sm text-red-300">
+                {assessmentError}
+              </p>
+            )}
+          </div>
+
+          {assessmentResult?.impact && (
+            <div className="p-6 md:p-7">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-600">
+                    GAPLY recalculated
+                  </p>
+
+                  <h4 className="mt-1 text-xl font-bold text-slate-950">
+                    {assessmentResult.impact.skillName} changed from{' '}
+                    {assessmentResult.impact.oldProficiency} →{' '}
+                    {assessmentResult.impact.newProficiency}
+                  </h4>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Your skill gap changed from{' '}
+                    {Math.abs(assessmentResult.impact.gapBefore)} points to{' '}
+                    {Math.abs(assessmentResult.impact.gapAfter)} points.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <AdaptiveMetric
+                    label="Skill change"
+                    value={`+${
+                      assessmentResult.impact.proficiencyChange
+                    }`}
+                  />
+
+                  <AdaptiveMetric
+                    label="Readiness"
+                    value={`${
+                      Math.round(
+                        assessmentResult.gapAnalysisAfter.overallReadiness
+                      )
+                    }%`}
+                  />
+
+                  <AdaptiveMetric
+                    label="Readiness change"
+                    value={`${
+                      assessmentResult.impact.readinessImpact >= 0 ? '+' : ''
+                    }${
+                      assessmentResult.impact.readinessImpact
+                    }%`}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 text-indigo-600">✦</span>
+
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">
+                      Your next priorities can now change
+                    </p>
+
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      GAPLY has recalculated the skill gaps using your new
+                      assessment. Ask the Career Agent what to focus on now to
+                      see the updated recommendation.
+                    </p>
+
+                    <Link
+                      href="/dashboard"
+                      className="mt-3 inline-flex text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+                    >
+                      Ask the Career Agent →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* CTA */}
       <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-7 md:p-8">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
@@ -321,6 +579,23 @@ export default function SkillsPage() {
           </Link>
         </div>
       </section>
+    </div>
+  );
+}
+
+function AdaptiveMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-bold text-slate-950">{value}</p>
     </div>
   );
 }

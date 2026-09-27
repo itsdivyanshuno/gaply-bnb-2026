@@ -7,6 +7,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '⌂' },
   { href: '/dashboard/profile', label: 'Profile', icon: '◉' },
   { href: '/dashboard/skills', label: 'Skills', icon: '◆' },
+  { href: '/dashboard/agent', label: 'AI Career Agent', icon: '✦' },
   { href: '/dashboard/projects', label: 'Projects', icon: '▣' },
   { href: '/dashboard/career-goal', label: 'Career Goal', icon: '◎' },
   { href: '/dashboard/roadmap', label: 'Roadmap', icon: '↗' },

@@ -169,8 +169,11 @@ export class CareerAgentService {
       where: { studentId: request.studentId },
     });
 
+    const extractedHours = extractHours(question);
+
     const weeklyAvailability =
       request.availableHours ||
+      extractedHours ||
       careerGoal.weeklyAvailability ||
       student.weeklyAvailability ||
       10;
@@ -210,6 +213,7 @@ export class CareerAgentService {
       weeklyAvailability,
       readiness: analysis.overallReadiness,
       focusSkills,
+      allSkillGaps: analysis.skillGaps,
       plan,
       projects,
     });
@@ -311,6 +315,7 @@ export class CareerAgentService {
     weeklyAvailability: number;
     readiness: number;
     focusSkills: FocusSkill[];
+    allSkillGaps: any[];
     plan: AgentPlanItem[];
     projects: any[];
   }): string {
@@ -320,6 +325,7 @@ export class CareerAgentService {
       weeklyAvailability,
       readiness,
       focusSkills,
+      allSkillGaps,
       plan,
       projects,
     } = data;
@@ -344,11 +350,19 @@ export class CareerAgentService {
 
       const normalizedQuestion = data.question.toLowerCase();
 
-      const requestedSkill = focusSkills.find((skill) =>
+      const requestedSkill = data.allSkillGaps.find((skill: any) =>
         normalizedQuestion.includes(skill.skillName.toLowerCase())
       );
 
-      const skill = requestedSkill || focusSkills[0];
+      if (requestedSkill) {
+        const current = requestedSkill.currentProficiency ?? 0;
+        const required = requestedSkill.requiredProficiency ?? 0;
+        const gap = Math.max(0, required - current);
+
+        return `${requestedSkill.skillName} is currently ${current}/100 while your target role requires ${required}/100. That creates a ${gap}-point gap. It is prioritized because of the role requirement, gap size, project relevance, dependencies, and confidence in your current assessment.`;
+      }
+
+      const skill = focusSkills[0];
 
       return `${skill.skillName} is currently ${skill.current}/100 while your target role requires ${skill.required}/100. That creates a ${skill.gap}-point gap. It is prioritized because of the role requirement, gap size, project relevance, dependencies, and confidence in your current assessment.`;
     }
