@@ -21,7 +21,7 @@ async function main() {
 
   // Create demo student
   const student = await prisma.student.create({
-    data: {
+    data: { id: 'user-1',
       name: 'Demo User',
       email: 'demo@gaply.com',
       education: 'Computer Science',
@@ -35,7 +35,7 @@ async function main() {
 
   // Create career goal
   const careerGoal = await prisma.careerGoal.create({
-    data: {
+    data: { id: 'user-1',
       studentId: student.id,
       targetRole: 'Full Stack Developer',
       experienceLevel: 'Intermediate',

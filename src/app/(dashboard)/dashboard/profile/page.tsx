@@ -35,10 +35,10 @@ export default function ProfilePage() {
       setProfile(JSON.parse(storedProfile));
     } else {
       // Set default values if user exists
-      if (user) {
+      if (storedUser) {
         setProfile({
-          name: user.name,
-          email: user.email,
+          name: JSON.parse(storedUser).name,
+          email: JSON.parse(storedUser).email,
           education: 'Computer Science',
           degreeBranch: 'Software Engineering',
           year: 3,
@@ -54,7 +54,7 @@ export default function ProfilePage() {
         });
       }
     }
-  }, [user]);
+  }, []);
 
   const handleSave = () => {
     localStorage.setItem('gaply_profile', JSON.stringify(profile));
