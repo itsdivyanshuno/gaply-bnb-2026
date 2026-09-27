@@ -1,4 +1,4 @@
-# GAPLY 🚀
+# TechBrigade - proposed GAPLY 🚀
 
 ### AI Career Agent for Skill-Gap Analysis, Personalized Learning & Adaptive Roadmaps
 
