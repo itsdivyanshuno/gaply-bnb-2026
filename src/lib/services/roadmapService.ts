@@ -191,49 +191,74 @@ export class RoadmapService {
     // For simplicity in this demo, we'll keep dependencies as skill IDs and handle them in UI
     // In a real implementation, we'd map skill dependencies to actual module IDs
 
-    // Calculate weekly schedule
-    const totalEstimatedHours = allItems.reduce((sum, item) => sum + item.estimatedEffort, 0);
-    const weeks = Math.max(1, Math.ceil(totalEstimatedHours / options.weeklyAvailability));
-    const weeklySchedule: Array<{ week: number; hours: number; activities: string[] }> = [];
+    // Calculate weekly schedule.
+    // Each roadmap item can span multiple weeks, but once an item is
+    // completed across its required hours, scheduling moves to the next item.
+    const totalEstimatedHours = allItems.reduce(
+      (sum, item) => sum + item.estimatedEffort,
+      0
+    );
 
-    let hoursRemaining = totalEstimatedHours;
+    const weeks = Math.max(
+      1,
+      Math.ceil(totalEstimatedHours / options.weeklyAvailability)
+    );
+
+    const weeklySchedule: Array<{
+      week: number;
+      hours: number;
+      activities: string[];
+    }> = [];
+
     let itemIndex = 0;
+    let remainingItemHours =
+      itemIndex < allItems.length ? allItems[itemIndex].estimatedEffort : 0;
+    let currentPart = 1;
 
-    for (let week = 1; week <= weeks; week++) {
-      const hoursThisWeek = Math.min(options.weeklyAvailability, hoursRemaining);
-      hoursRemaining -= hoursThisWeek;
-
+    for (let week = 1; week <= weeks && itemIndex < allItems.length; week++) {
+      let hoursAvailable = options.weeklyAvailability;
+      let hoursUsed = 0;
       const activities: string[] = [];
-      let hoursUsedThisWeek = 0;
 
-      // Assign items to weeks based on effort
-      while (hoursUsedThisWeek < hoursThisWeek && itemIndex < allItems.length) {
+      while (hoursAvailable > 0 && itemIndex < allItems.length) {
         const item = allItems[itemIndex];
-        if (item.estimatedEffort <= (hoursThisWeek - hoursUsedThisWeek)) {
-          activities.push(`${item.title} (${item.estimatedEffort} hrs)`);
-          hoursUsedThisWeek += item.estimatedEffort;
-          itemIndex++;
+        const hoursForItem = Math.min(hoursAvailable, remainingItemHours);
+
+        const completedPart =
+          remainingItemHours === item.estimatedEffort
+            ? ""
+            : remainingItemHours < item.estimatedEffort
+              ? ` (continued, ${hoursForItem} hrs)`
+              : "";
+
+        if (hoursForItem === item.estimatedEffort) {
+          activities.push(`${item.title} (${hoursForItem} hrs)`);
         } else {
-          // Split the item across weeks
-          const remainingInItem = item.estimatedEffort - (hoursUsedThisWeek > 0 ?
-            (item.estimatedEffort - (hoursThisWeek - hoursUsedThisWeek)) : 0);
-          if (hoursUsedThisWeek === 0) {
-            activities.push(`${item.title} (Part 1, ${hoursThisWeek - hoursUsedThisWeek} hrs)`);
-          } else {
-            activities.push(`${item.title} (Part ${Math.floor(hoursUsedThisWeek / item.estimatedEffort) + 2}, ${hoursThisWeek - hoursUsedThisWeek} hrs)`);
+          activities.push(
+            `${item.title} (Part ${currentPart}, ${hoursForItem} hrs)`
+          );
+          currentPart++;
+        }
+
+        hoursUsed += hoursForItem;
+        hoursAvailable -= hoursForItem;
+        remainingItemHours -= hoursForItem;
+
+        if (remainingItemHours <= 0) {
+          itemIndex++;
+          currentPart = 1;
+
+          if (itemIndex < allItems.length) {
+            remainingItemHours = allItems[itemIndex].estimatedEffort;
           }
-          hoursUsedThisWeek = hoursThisWeek;
-          break;
         }
       }
 
       weeklySchedule.push({
         week,
-        hours: hoursUsedThisWeek,
-        activities
+        hours: hoursUsed,
+        activities,
       });
-
-      if (hoursRemaining <= 0 && itemIndex >= allItems.length) break;
     }
 
     // Save or update the roadmap in our data store
@@ -486,12 +511,19 @@ for (const existing of existingItems) {
       };
     }
 
-    // Analyze how recent evidence affects skill proficiencies
-    // For simplicity, we'll just suggest a general update
+    // Analyze current gaps and identify skills that are actually mentioned
+    // in recent learning evidence instead of assuming the first gaps improved.
     const gapAnalysis = await skillGapService.analyzeSkillGaps(studentId);
+
+    const recentDescriptions = recentEvidence
+      .map((e: any) => String(e.description || '').toLowerCase())
+      .join(' ');
+
     const skillsImproved = gapAnalysis.skillGaps
-      .filter(gap => gap.gap < -5) // Skills where gap has improved (become less negative)
-      .slice(0, 3); // Top 3 improved skills
+      .filter((gap) =>
+        recentDescriptions.includes(gap.skillName.toLowerCase())
+      )
+      .slice(0, 3);
 
     let suggestedChanges: any[] = [];
 
@@ -500,10 +532,10 @@ for (const existing of existingItems) {
         type: 'UPDATE_ORDER',
         itemId: 'review-completed-skills',
         title: 'Review Recently Improved Skills',
-        description: `Consider advancing your learning in: ${skillsImproved.map(s => s.skillName).join(', ')}`,
+        description: `Continue advancing: ${skillsImproved.map(s => s.skillName).join(', ')}`,
         order: 1,
         estimatedEffort: 1,
-        rationale: 'You have made progress in these skills - consider learning more advanced topics'
+        rationale: 'These skills are explicitly represented in your recent learning evidence.'
       });
     }
 

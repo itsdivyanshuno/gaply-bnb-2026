@@ -48,6 +48,7 @@ export class ProgressService {
     gapAnalysisBefore: any;
     gapAnalysisAfter: any;
     roadmapSuggestions: any;
+    adaptiveRoadmap: any;
   }> {
     // Get student
     const student = await this.studentRepo.findUnique({ where: { id: update.studentId } });
@@ -127,8 +128,25 @@ export class ProgressService {
     const readinessAfter = gapAnalysisAfter.overallReadiness;
     const readinessImpact = readinessAfter - readinessBefore;
 
-    // Get roadmap adjustment suggestions based on this progress
-    const roadmapSuggestions = await roadmapService.suggestRoadmapAdjustments(update.studentId);
+    // Recalculate the roadmap immediately after skill progress.
+    // The roadmap service preserves existing completed/in-progress items
+    // while updating the learning plan around the student's new priorities.
+    let adaptiveRoadmap = null;
+
+    if (
+      careerGoal.timelineMonths != null &&
+      careerGoal.weeklyAvailability != null
+    ) {
+      adaptiveRoadmap = await roadmapService.generateRoadmap(update.studentId, {
+        weeklyAvailability: careerGoal.weeklyAvailability,
+        timelineMonths: careerGoal.timelineMonths,
+        includeProjects: true,
+      });
+    }
+
+    // Keep an explainable adjustment summary for the UI/API.
+    const roadmapSuggestions =
+      await roadmapService.suggestRoadmapAdjustments(update.studentId);
 
     // Create evidence if provided
     if (update.evidenceId) {
@@ -151,7 +169,8 @@ export class ProgressService {
       },
       gapAnalysisBefore,
       gapAnalysisAfter,
-      roadmapSuggestions
+      roadmapSuggestions,
+      adaptiveRoadmap
     };
   }
 
