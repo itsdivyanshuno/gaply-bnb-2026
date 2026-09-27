@@ -153,7 +153,9 @@ export default function CareerGoalPage() {
         targetRole: careerGoal.targetRole,
         experienceLevel: careerGoal.experienceLevel || '',
         timelineMonths: careerGoal.timelineMonths?.toString() || '',
-        preferredTechnologies: careerGoal.preferredTechnologies.join(', '),
+        preferredTechnologies: Array.isArray(careerGoal.preferredTechnologies)
+          ? careerGoal.preferredTechnologies.join(', ')
+          : String(careerGoal.preferredTechnologies || ''),
         weeklyAvailability: careerGoal.weeklyAvailability?.toString() || ''
       });
     } else {
@@ -380,7 +382,9 @@ export default function CareerGoalPage() {
             {careerGoal.preferredTechnologies.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-gray-700">Preferred Technologies:</h4>
-                <p className="text-sm">{careerGoal.preferredTechnologies.join(', ')}</p>
+                <p className="text-sm">{Array.isArray(careerGoal.preferredTechnologies)
+                  ? careerGoal.preferredTechnologies.join(', ')
+                  : String(careerGoal.preferredTechnologies || '')}</p>
               </div>
             )}
           </div>

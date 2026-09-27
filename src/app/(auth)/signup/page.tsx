@@ -32,20 +32,23 @@ export default function SignUpPage() {
         return;
       }
 
-      // Simulate sign-up delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-      // In a real app, this would call an API endpoint to create the user
-      // For demo, we'll just simulate successful registration
+      const data = await response.json();
 
-      // Create user object
-      const newUser = {
-        id: `user-${Date.now()}`,
-        name,
-        email
-      };
+      if (!response.ok) {
+        setError(data.error || 'Failed to create account');
+        return;
+      }
 
-      // Store user in localStorage (simplified auth)
+      const newUser = data.user;
+
       localStorage.setItem('gaply_user', JSON.stringify(newUser));
 
       // Create default profile

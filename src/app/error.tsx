@@ -1,55 +1,51 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
 
-export default function Error({ resetError, reset }: { resetError: () => void; reset: () => void }) {
-  useEffect(() => {
-    // Attempt to reset the error and redirect to home
-    resetError();
-    reset();
-
-    // Fallback redirect
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 2000);
-  }, [resetError, reset]);
-
+export default function Error({
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="text-center space-y-6">
-        <div className="flex-shrink-0">
-          <svg className="h-12 w-12 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        <div className="flex justify-center">
+          <svg
+            className="h-12 w-12 text-red-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
+
         <h1 className="text-3xl font-bold text-gray-900">
           Something Went Wrong
         </h1>
+
         <p className="text-xl text-gray-600">
-          We encountered an unexpected error. Please try again later.
+          We encountered an unexpected error. Please try again.
         </p>
-        <div className="mt-6">
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
-            onClick={() => {
-              resetError();
-              reset();
-              window.location.href = '/';
-            }}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus-ring-offset-2"
+            onClick={() => reset()}
+            className="inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
           >
             Try Again
           </button>
+
           <Link
             href="/"
-            className="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-200 hover:bg-gray-300"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300"
           >
             Go to Homepage
           </Link>
         </div>
-        <p className="mt-4 text-sm text-gray-500">
-          Error ID: ${Math.random().toString(36).substr(2, 9)}
-        </p>
       </div>
     </div>
   );
