@@ -724,15 +724,15 @@ GAPLY continuously uses the student's goals, skills, evidence and progress to an
 
 ### 💻 GitHub
 
-[View GAPLY on GitHub](https://github.com/itsdivyanshuno/gaply-bnb-2026.git)
+[View BnB Hackathon on GitHub](https://github.com/itsdivyanshuno/gaply-bnb-2026.git)
 
 ### 📑 Hackathon Presentation
 
-[View GAPLY Hackathon PPT](https://docs.google.com/presentation/d/1RqMjsQCQxUgrOf95PitRNWezacG7awyr4jJdRnLJoyQ/edit?usp=sharing)
+[View BnB Hackathon PPT](https://docs.google.com/presentation/d/1RqMjsQCQxUgrOf95PitRNWezacG7awyr4jJdRnLJoyQ/edit?usp=sharing)
 
 ### 🎥 Hackathon Demo
 
-[Watch GAPLY Demo Video](YOUR_VIDEO_LINK_HERE)
+[Watch BnB Hackathon Demo Video](YOUR_VIDEO_LINK_HERE)
 
 ---
 
