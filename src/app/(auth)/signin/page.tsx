@@ -48,78 +48,139 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-black px-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white">Welcome back</h1>
-          <p className="mt-2 text-sm text-gray-400">
-            Sign in to continue to Gaply
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label
-              htmlFor="email"
-              className="mb-2 block text-sm font-medium text-gray-300"
-            >
-              Email
-            </label>
-
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition focus:border-orange-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="mb-2 block text-sm font-medium text-gray-300"
-            >
-              Password
-            </label>
-
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition focus:border-orange-500"
-            />
-          </div>
-
-          {error && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-              {error}
+    <main className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+          <Link href="/" className="group">
+            <div className="text-2xl font-black tracking-tight text-slate-950">
+              GAP<span className="text-indigo-600">LY</span>
             </div>
-          )}
+            <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              Career intelligence
+            </p>
+          </Link>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-orange-500 px-4 py-3 font-semibold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-gray-400">
-          Don&apos;t have an account?{' '}
           <Link
             href="/signup"
-            className="font-medium text-orange-400 hover:text-orange-300"
+            className="text-sm font-semibold text-slate-600 transition hover:text-slate-950"
           >
-            Create one
+            Create account →
           </Link>
-        </p>
+        </div>
+      </header>
+
+      {/* Main */}
+      <div className="flex min-h-[calc(100vh-80px)] items-center justify-center px-5 py-12">
+        <div className="w-full max-w-[440px]">
+          {/* Heading */}
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-lg text-white shadow-lg shadow-indigo-200">
+              ✦
+            </div>
+
+            <h1 className="text-3xl font-black tracking-tight text-slate-950">
+              Welcome back
+            </h1>
+
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Sign in to continue building your career path.
+            </p>
+          </div>
+
+          {/* Card */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm md:p-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="mb-2 block text-sm font-semibold text-slate-700"
+                >
+                  Email
+                </label>
+
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoComplete="email"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                />
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-semibold text-slate-700"
+                  >
+                    Password
+                  </label>
+                </div>
+
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  autoComplete="current-password"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                />
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-xl bg-slate-950 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-200 transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Signing in...
+                  </span>
+                ) : (
+                  'Sign in'
+                )}
+              </button>
+            </form>
+
+            {/* Signup */}
+            <div className="mt-7 border-t border-slate-100 pt-6 text-center">
+              <p className="text-sm text-slate-500">
+                Don&apos;t have an account?{' '}
+                <Link
+                  href="/signup"
+                  className="font-semibold text-indigo-600 hover:text-indigo-700"
+                >
+                  Create one
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          {/* Back */}
+          <Link
+            href="/"
+            className="mt-6 flex justify-center text-xs font-medium text-slate-400 transition hover:text-slate-600"
+          >
+            ← Back to GAPLY
+          </Link>
+        </div>
       </div>
     </main>
   );
