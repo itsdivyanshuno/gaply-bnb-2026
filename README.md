@@ -8,11 +8,11 @@
 
 ## 🎥 Hackathon Demo
 
-[▶️ Watch GAPLY Demo Video](YOUR_VIDEO_LINK_HERE)
+[▶️ Watch BnB Hackathon Demo Video](YOUR_VIDEO_LINK_HERE)
 
 ## 📑 Hackathon Presentation
 
-[📊 View GAPLY Hackathon PPT](https://docs.google.com/presentation/d/1RqMjsQCQxUgrOf95PitRNWezacG7awyr4jJdRnLJoyQ/edit?usp=sharing)
+[📊 View BnB Hackathon PPT](https://docs.google.com/presentation/d/1RqMjsQCQxUgrOf95PitRNWezacG7awyr4jJdRnLJoyQ/edit?usp=sharing)
 
 ---
 
