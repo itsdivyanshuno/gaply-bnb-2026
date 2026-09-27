@@ -1,0 +1,145 @@
+import { dataStore } from './store';
+
+// Test the data store
+async function testDataStore() {
+  console.log('Testing data store...');
+  
+  // Test creating a student
+  const studentRepo = dataStore.getStudentRepository();
+  const student = await studentRepo.create({
+    name: 'Test Student',
+    email: 'test@example.com',
+    education: 'Computer Science',
+    degreeBranch: 'Software Engineering',
+    year: 3,
+    weeklyAvailability: 15
+  });
+  
+  console.log('Created student:', student.id);
+  
+  // Test finding student by email
+  const foundStudent = await studentRepo.findByEmail('test@example.com');
+  console.log('Found student by email:', foundStudent?.name);
+  
+  // Test creating a career goal
+  const careerGoalRepo = dataStore.getCareerGoalRepository();
+  const careerGoal = await careerGoalRepo.create({
+    studentId: student.id,
+    targetRole: 'Full Stack Developer',
+    experienceLevel: 'Intermediate',
+    timelineMonths: 6,
+    preferredTechnologies: ['JavaScript', 'React', 'Node.js'],
+    weeklyAvailability: 10
+  });
+  
+  console.log('Created career goal:', careerGoal.id);
+  
+  // Test finding career goal by student ID
+  const foundCareerGoal = await careerGoalRepo.findByStudentId(student.id);
+  console.log('Found career goal by student ID:', foundCareerGoal?.targetRole);
+  
+  // Test creating a skill
+  const skillRepo = dataStore.getSkillRepository();
+  const javascriptSkill = await skillRepo.create({
+    name: 'JavaScript',
+    description: 'Programming language for web development',
+    category: 'Programming'
+  });
+  
+  console.log('Created skill:', javascriptSkill.id);
+  
+  // Test finding skill by name
+  const foundSkill = await skillRepo.findByName('javascript');
+  console.log('Found skill by name:', foundSkill?.name);
+  
+  // Test creating a role
+  const roleRepo = dataStore.getRoleRepository();
+  const fullStackRole = await roleRepo.create({
+    name: 'Full Stack Developer',
+    description: 'Develops both frontend and backend of web applications'
+  });
+  
+  console.log('Created role:', fullStackRole.id);
+  
+  // Test finding role by name
+  const foundRole = await roleRepo.findByName('full stack developer');
+  console.log('Found role by name:', foundRole?.name);
+  
+  // Test creating a role-skill requirement
+  const roleSkillRepo = dataStore.getRoleSkillRepository();
+  const roleSkill = await roleSkillRepo.create({
+    roleId: fullStackRole.id,
+    skillId: javascriptSkill.id,
+    requiredProficiency: 80,
+    importance: 90
+  });
+  
+  console.log('Created role-skill:', roleSkill.id);
+  
+  // Test finding role skills by role ID
+  const roleSkills = await roleSkillRepo.findByRoleId(fullStackRole.id);
+  console.log('Found role skills count:', roleSkills.length);
+  
+  // Test creating student skill
+  const studentSkillRepo = dataStore.getStudentSkillRepository();
+  const studentSkill = await studentSkillRepo.create({
+    studentId: student.id,
+    skillId: javascriptSkill.id,
+    currentProficiency: 60,
+    confidence: 0.8
+  });
+  
+  console.log('Created student skill:', studentSkill.id);
+  
+  // Test finding student skill by student and skill
+  const foundStudentSkill = await studentSkillRepo.findByStudentAndSkill(student.id, javascriptSkill.id);
+  console.log('Found student skill:', foundStudentSkill?.currentProficiency);
+  
+  // Test creating evidence
+  const evidenceRepo = dataStore.getEvidenceRepository();
+  const evidence = await evidenceRepo.create({
+    studentId: student.id,
+    type: 'PROJECT',
+    title: 'Todo App',
+    description: 'A simple todo application built with React',
+    url: 'https://github.com/user/todo-app',
+    relatedSkills: [javascriptSkill.id],
+    score: 85,
+    completedAt: new Date()
+  });
+  
+  console.log('Created evidence:', evidence.id);
+  
+  // Test finding evidence by student ID
+  const studentEvidence = await evidenceRepo.findByStudentId(student.id);
+  console.log('Found evidence count:', studentEvidence.length);
+  
+  // Test creating a project
+  const projectRepo = dataStore.getProjectRepository();
+  const project = await projectRepo.create({
+    name: 'Expense Tracker',
+    description: 'A web application for tracking personal expenses',
+    difficulty: 'Intermediate',
+    estimatedHours: 20
+  });
+  
+  console.log('Created project:', project.id);
+  
+  // Test creating project-skill mapping
+  const projectSkillRepo = dataStore.getProjectSkillRepository();
+  const projectSkill = await projectSkillRepo.create({
+    projectId: project.id,
+    skillId: javascriptSkill.id,
+    relevance: 85
+  });
+  
+  console.log('Created project-skill:', projectSkill.id);
+  
+  // Test finding project skills by project ID
+  const projectSkills = await projectSkillRepo.findByProjectId(project.id);
+  console.log('Found project skills count:', projectSkills.length);
+  
+  console.log('Data store test completed successfully!');
+}
+
+testDataStore().catch(console.error);

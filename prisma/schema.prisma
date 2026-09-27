@@ -1,0 +1,228 @@
+// Prisma Schema for GAPLY
+// Note: Due to WSL2/npm installation issues, we're using an in-memory data layer for demo
+// To use PostgreSQL, resolve installation issues and uncomment the PostgreSQL datasource
+
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Student Profile
+model Student {
+  id                 String    @id @default(cuid())
+  name               String
+  email              String    @unique
+  emailVerified      DateTime?
+  image              String?
+  // Profile fields from requirements
+  education          String?
+  degreeBranch       String?
+  year               Int?
+  weeklyAvailability Int? // hours per week available for learning
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Relations
+  careerGoal      CareerGoal?
+  studentSkills   StudentSkill[]
+  evidence        Evidence[]
+  roadmaps        Roadmap[]
+  assessments     Assessment[]
+  recommendations Recommendation[]
+  progress        Progress[]
+}
+
+// Career Goal
+model CareerGoal {
+  id                    String   @id @default(cuid())
+  studentId             String   @unique
+  student               Student  @relation(fields: [studentId], references: [id])
+  targetRole            String
+  experienceLevel       String? // Beginner, Intermediate, Advanced
+  timelineMonths        Int? // Desired timeline in months
+  preferredTechnologies Json? // Array of strings
+  weeklyAvailability    Int? // Hours per week for learning
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// Skill Catalog
+model Skill {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  category    String? // e.g., Programming, Frameworks, Databases, Soft Skills
+  createdAt   DateTime @default(now())
+
+  // Relations
+  roleSkills    RoleSkill[]
+  studentSkills StudentSkill[]
+  assessments   Assessment[]
+  projectSkills ProjectSkill[]
+}
+
+// Role Definition
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  roleSkills RoleSkill[]
+}
+
+// Junction: Role-Skill Requirements
+model RoleSkill {
+  id                  String @id @default(cuid())
+  roleId              String
+  role                Role   @relation(fields: [roleId], references: [id])
+  skillId             String
+  skill               Skill  @relation(fields: [skillId], references: [id])
+  requiredProficiency Int // 0-100 scale
+  importance          Int // 0-100 scale (how critical for the role)
+  // Dependencies could be modeled separately if needed
+
+  @@unique([roleId, skillId])
+}
+
+// Student's Skill Assessment
+model StudentSkill {
+  id                 String   @id @default(cuid())
+  studentId          String
+  student            Student  @relation(fields: [studentId], references: [id])
+  skillId            String
+  skill              Skill    @relation(fields: [skillId], references: [id])
+  currentProficiency Int // 0-100 (assessed level)
+  confidence         Float // 0-1 (confidence in assessment)
+  lastAssessed       DateTime @default(now())
+  // Evidence references could be stored here or in separate Evidence table
+
+  @@unique([studentId, skillId])
+}
+
+// Evidence of Learning/Progress
+model Evidence {
+  id            String   @id @default(cuid())
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id])
+  type          String // PROJECT, QUIZ, GITHUB_REPO, CERTIFICATION, SELF_ASSESSMENT, etc.
+  title         String
+  description   String?
+  url           String? // Link to evidence (GitHub repo, certificate, etc.)
+  relatedSkills Json? // Array of skill IDs this evidence demonstrates
+  score         Int? // Score if applicable (0-100)
+  completedAt   DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([studentId, type])
+}
+
+// Learning/Project Recommendations
+model Project {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  difficulty     String? // Beginner, Intermediate, Advanced
+  estimatedHours Int? // Estimated completion time
+  createdAt      DateTime @default(now())
+
+  // Relations
+  projectSkills ProjectSkill[]
+}
+
+// Junction: Project-Skill Mapping
+model ProjectSkill {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+  skillId   String
+  skill     Skill   @relation(fields: [skillId], references: [id])
+  relevance Int // 0-100 (how much this project develops the skill)
+
+  @@unique([projectId, skillId])
+}
+
+// Personalized Learning Roadmap
+model Roadmap {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  title       String // e.g., "Full Stack Developer Roadmap"
+  description String?
+  version     Int      @default(1) // For tracking iterations
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  roadmapItems RoadmapItem[]
+}
+
+// Roadmap Items (Learning Modules, Tasks, Milestones, Projects)
+model RoadmapItem {
+  id              String     @id @default(cuid())
+  roadmapId       String
+  roadmap         Roadmap    @relation(fields: [roadmapId], references: [id])
+  title           String
+  description     String?
+  type            String // LEARNING_MODULE, TASK, MILESTONE, PROJECT
+  estimatedEffort Int // In hours
+  order           Int // Sequence in roadmap
+  dependencies    Json? // Array of prerequisite roadmap item IDs
+  // Resources could be links to external content
+  completed       Boolean    @default(false)
+  completedAt     DateTime?
+  progresses      Progress[]
+
+  @@index([roadmapId, order])
+}
+
+// Progress Tracking
+model Progress {
+  id            String      @id @default(cuid())
+  studentId     String
+  student       Student     @relation(fields: [studentId], references: [id])
+  roadmapItemId String
+  roadmapItem   RoadmapItem @relation(fields: [roadmapItemId], references: [id])
+  evidenceIds   Json? // Array of evidence IDs demonstrating completion
+  completedAt   DateTime    @default(now())
+
+  @@unique([studentId, roadmapItemId])
+}
+
+// AI-Generated Recommendations
+model Recommendation {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  type        String // SKILL_PRIORITY, PROJECT_RECOMMENDATION, ROADMAP_ADJUSTMENT, etc.
+  title       String
+  description String?
+  rationale   String // Explainability - why this recommendation was made
+  confidence  Float // 0-1 (confidence in recommendation)
+  sourceData  Json? // Optional: data used to generate this recommendation
+  isAccepted  Boolean? // null=pending, true=accepted, false=rejected
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([studentId, type])
+}
+
+// Assessment Records (Quizzes, Tests, etc.)
+model Assessment {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  skillId     String
+  skill       Skill    @relation(fields: [skillId], references: [id])
+  score       Int // 0-100
+  type        String // SELF_ASSESSMENT, QUIZ, EXTERNAL_TEST, etc.
+  conductedAt DateTime @default(now())
+  notes       String?
+
+  @@index([studentId, skillId])
+}
