@@ -13,14 +13,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const analysis = await skillGapService.analyzeSkillGaps(studentId);
-    const priorities =
-      await prioritizationService.prioritizeSkillsForStudent(studentId);
+    try {
+      const analysis = await skillGapService.analyzeSkillGaps(studentId);
+      const priorities =
+        await prioritizationService.prioritizeSkillsForStudent(studentId);
 
-    return NextResponse.json({
-      analysis,
-      priorities,
-    });
+      return NextResponse.json({
+        analysis,
+        priorities,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+
+      if (
+        message.includes('Career goal not found') ||
+        message.includes('Role not found')
+      ) {
+        return NextResponse.json({
+          analysis: null,
+          priorities: [],
+          needsSetup: true,
+        });
+      }
+
+      throw error;
+    }
   } catch (error) {
     console.error('GET /api/skills error:', error);
 

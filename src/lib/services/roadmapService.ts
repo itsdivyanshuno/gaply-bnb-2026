@@ -151,38 +151,9 @@ export class RoadmapService {
       let description = `Develop proficiency in ${skill.name} from ${gap.currentProficiency} to ${gap.requiredProficiency}. `;
       description += gap.explanation;
 
-      // Add resources based on skill type
+      // Resources are intentionally left empty until real learning resources
+      // are connected. Never expose placeholder "#" links as recommendations.
       const resources: GeneratedRoadmapItem['resources'] = [];
-      switch (skill.name) {
-        case 'JavaScript':
-          resources.push(
-            { type: 'COURSE', title: 'JavaScript Basics', url: '#', description: 'Learn JavaScript fundamentals' },
-            { type: 'EXERCISE', title: 'JavaScript Practice', url: '#', description: 'Hands-on JavaScript exercises' }
-          );
-          break;
-        case 'React':
-          resources.push(
-            { type: 'COURSE', title: 'React Fundamentals', url: '#', description: 'Learn React hooks and components' },
-            { type: 'PROJECT', title: 'Build a Todo App', url: '#', description: 'Apply React concepts in a project' }
-          );
-          break;
-        case 'Node.js':
-          resources.push(
-            { type: 'COURSE', title: 'Node.js Essentials', url: '#', description: 'Learn server-side JavaScript' },
-            { type: 'PROJECT', title: 'Create a REST API', url: '#', description: 'Build a backend API with Node.js' }
-          );
-          break;
-        case 'PostgreSQL':
-          resources.push(
-            { type: 'COURSE', title: 'SQL and PostgreSQL', url: '#', description: 'Learn relational databases and SQL' },
-            { type: 'PROJECT', title: 'Design a Database Schema', url: '#', description: 'Create a database for a web app' }
-          );
-          break;
-        default:
-          resources.push(
-            { type: 'ARTICLE', title: `Learn ${skill.name}`, url: '#', description: `Study materials for ${skill.name}` }
-          );
-      }
 
       learningModules.push({
         id: `module-${skill.id}`,
@@ -208,9 +179,7 @@ export class RoadmapService {
           estimatedEffort: proj.estimatedHours,
           order: currentOrder++,
           dependencies: [], // Projects typically come after learning the skills they use
-          resources: [
-            { type: 'PROJECT', title: proj.projectName, url: '#', description: proj.projectDescription }
-          ]
+          resources: [],
         });
       }
     }

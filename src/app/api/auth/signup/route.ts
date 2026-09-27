@@ -40,26 +40,6 @@ export async function POST(request: Request) {
         name: name.trim(),
         email: normalizedEmail,
         passwordHash,
-        education: 'Computer Science',
-        degreeBranch: 'Software Engineering',
-        year: 3,
-        weeklyAvailability: 10,
-      },
-    });
-
-    await prisma.careerGoal.create({
-      data: {
-        studentId: user.id,
-        targetRole: 'Full Stack Developer',
-        experienceLevel: 'Beginner',
-        timelineMonths: 6,
-        preferredTechnologies: JSON.stringify([
-          'JavaScript',
-          'React',
-          'Node.js',
-          'PostgreSQL',
-        ]),
-        weeklyAvailability: 10,
       },
     });
 

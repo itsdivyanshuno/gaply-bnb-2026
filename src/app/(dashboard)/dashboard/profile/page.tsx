@@ -29,44 +29,7 @@ const defaultProfile: Profile = {
   skills: [],
 };
 
-const demoSkills: Skill[] = [
-  {
-    id: 'skill-1',
-    name: 'JavaScript',
-    proficiency: 75,
-    confidence: 0.8,
-  },
-  {
-    id: 'skill-2',
-    name: 'React',
-    proficiency: 65,
-    confidence: 0.75,
-  },
-  {
-    id: 'skill-3',
-    name: 'Node.js',
-    proficiency: 40,
-    confidence: 0.7,
-  },
-  {
-    id: 'skill-4',
-    name: 'PostgreSQL',
-    proficiency: 25,
-    confidence: 0.65,
-  },
-  {
-    id: 'skill-5',
-    name: 'Testing',
-    proficiency: 15,
-    confidence: 0.6,
-  },
-  {
-    id: 'skill-6',
-    name: 'System Design',
-    proficiency: 10,
-    confidence: 0.55,
-  },
-];
+
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
@@ -104,11 +67,11 @@ export default function ProfilePage() {
             ...defaultProfile,
             name: userData.name || '',
             email: userData.email || '',
-            education: 'Computer Science',
-            degreeBranch: 'Software Engineering',
-            year: 3,
-            weeklyAvailability: 10,
-            skills: demoSkills,
+            education: '',
+            degreeBranch: '',
+            year: null,
+            weeklyAvailability: null,
+            skills: [],
           });
         }
       } else {
@@ -116,11 +79,11 @@ export default function ProfilePage() {
           ...defaultProfile,
           name: userData.name || '',
           email: userData.email || '',
-          education: 'Computer Science',
-          degreeBranch: 'Software Engineering',
-          year: 3,
-          weeklyAvailability: 10,
-          skills: demoSkills,
+          education: '',
+          degreeBranch: '',
+          year: null,
+          weeklyAvailability: null,
+          skills: [],
         });
       }
     } catch {

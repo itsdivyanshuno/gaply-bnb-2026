@@ -13,18 +13,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const analysis = await skillGapService.analyzeSkillGaps(studentId);
+    try {
+      const analysis = await skillGapService.analyzeSkillGaps(studentId);
 
-    const recommendations =
-      await projectRecommendationService.recommendProjectsForStudent(
-        studentId,
-        5
-      );
+      const recommendations =
+        await projectRecommendationService.recommendProjectsForStudent(
+          studentId,
+          5
+        );
 
-    return NextResponse.json({
-      analysis,
-      recommendations,
-    });
+      return NextResponse.json({
+        analysis,
+        recommendations,
+        needsSetup: false,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+
+      if (
+        message.includes('Career goal not found') ||
+        message.includes('Role not found')
+      ) {
+        return NextResponse.json({
+          analysis: null,
+          recommendations: [],
+          needsSetup: true,
+        });
+      }
+
+      throw error;
+    }
   } catch (error) {
     console.error('GET /api/projects error:', error);
 

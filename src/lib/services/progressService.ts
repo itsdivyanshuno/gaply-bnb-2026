@@ -208,34 +208,69 @@ export class ProgressService {
       estimatedHours: number;
     }>;
   }> {
-    const student = await this.studentRepo.findUnique({ where: { id: studentId } });
-    if (!student) throw new Error(`Student not found: ${studentId}`);
+    const student = await this.studentRepo.findUnique({
+      where: { id: studentId },
+    });
 
-    const skill = await this.skillRepo.findUnique({ where: { id: skillId } });
-    if (!skill) throw new Error(`Skill not found: ${skillId}`);
+    if (!student) {
+      throw new Error(`Student not found: ${studentId}`);
+    }
 
-    // Get career goal and role
-    const careerGoal = await this.careerGoalRepo.findFirst({ where: { studentId: studentId } });
-    if (!careerGoal) throw new Error(`Career goal not found`);
+    const skill = await this.skillRepo.findUnique({
+      where: { id: skillId },
+    });
 
-    const role = await this.roleRepo.findFirst({ where: { name: careerGoal.targetRole } });
-    if (!role) throw new Error(`Role not found`);
+    if (!skill) {
+      throw new Error(`Skill not found: ${skillId}`);
+    }
+
+    // Get the student's career goal and target role.
+    const careerGoal = await this.careerGoalRepo.findFirst({
+      where: { studentId },
+    });
+
+    if (!careerGoal) {
+      throw new Error('Career goal not found');
+    }
+
+    const role = await this.roleRepo.findFirst({
+      where: { name: careerGoal.targetRole },
+    });
+
+    if (!role) {
+      throw new Error(`Role not found: ${careerGoal.targetRole}`);
+    }
 
     const roleSkill = await this.roleSkillRepo.findFirst({
-      where: { roleId: role.id, skillId: skillId }
+      where: {
+        roleId: role.id,
+        skillId,
+      },
     });
-    const requiredProficiency = roleSkill ? roleSkill.requiredProficiency : 0;
+
+    const requiredProficiency = roleSkill?.requiredProficiency ?? 0;
 
     const studentSkill = await this.studentSkillRepo.findFirst({
-      where: { studentId, skillId }
+      where: {
+        studentId,
+        skillId,
+      },
     });
-    const currentProficiency = studentSkill ? studentSkill.currentProficiency : 0;
 
-    // Calculate recommended hours to reach target
-    const proficiencyGap = requiredProficiency - currentProficiency;
-    const recommendedHours = proficiencyGap > 0 ? proficiencyGap * 2 : 0; // 2 hours per point as heuristic
+    const currentProficiency =
+      studentSkill?.currentProficiency ?? 0;
 
-    // Generate resource recommendations based on skill
+    // Estimate learning effort from the actual proficiency gap.
+    const proficiencyGap = Math.max(
+      0,
+      requiredProficiency - currentProficiency
+    );
+
+    const recommendedHours = Math.round(proficiencyGap * 2);
+
+    // Do not return fabricated courses, projects, articles or
+    // placeholder "#" URLs. Real resources should come from a
+    // connected resource catalogue/provider.
     const resources: Array<{
       type: string;
       title: string;
@@ -244,50 +279,15 @@ export class ProgressService {
       estimatedHours: number;
     }> = [];
 
-    switch (skill.name) {
-      case 'JavaScript':
-        resources.push(
-          { type: 'COURSE', title: 'JavaScript Algorithms and Data Structures', description: 'Learn JS fundamentals to advanced topics', estimatedHours: 20, url: '#' },
-          { type: 'PROJECT', title: 'Build a Weather App', description: 'Create a weather application using JavaScript APIs', estimatedHours: 15, url: '#' },
-          { type: 'EXERCISE', title: 'JavaScript Coding Challenges', description: 'Practice with coding challenges on platforms like LeetCode', estimatedHours: 10, url: '#' }
-        );
-        break;
-      case 'React':
-        resources.push(
-          { type: 'COURSE', title: 'Complete React Developer', description: 'Learn React hooks, context, and advanced patterns', estimatedHours: 25, url: '#' },
-          { type: 'PROJECT', title: 'Build an E-commerce Site', description: 'Create a full e-commerce application with React', estimatedHours: 30, url: '#' },
-          { type: 'ARTICLE', title: 'React Best Practices 2024', description: 'Learn the latest React patterns and performance optimizations', estimatedHours: 3, url: '#' }
-        );
-        break;
-      case 'Node.js':
-        resources.push(
-          { type: 'COURSE', title: 'Node.js, Express, MongoDB', description: 'Learn backend development with Node.js stack', estimatedHours: 30, url: '#' },
-          { type: 'PROJECT', title: 'Build a REST API for a Blog', description: 'Create a blogging platform with Node.js and Express', estimatedHours: 25, url: '#' },
-          { type: 'EXERCISE', title: 'Database Design Exercises', description: 'Practice designing schemas and writing queries', estimatedHours: 10, url: '#' }
-        );
-        break;
-      case 'PostgreSQL':
-        resources.push(
-          { type: 'COURSE', title: 'SQL and PostgreSQL Mastery', description: 'Learn SQL queries, database design, and optimization', estimatedHours: 25, url: '#' },
-          { type: 'PROJECT', title: 'Design a Social Media Database', description: 'Create the database schema for a social media platform', estimatedHours: 20, url: '#' },
-          { type: 'EXERCISE', title: 'Query Optimization Practice', description: 'Learn to write efficient SQL queries', estimatedHours: 15, url: '#' }
-        );
-        break;
-      default:
-        resources.push(
-          { type: 'ARTICLE', title: `Learn ${skill.name}`, description: `Comprehensive guide to learning ${skill.name}`, estimatedHours: 15, url: '#' },
-          { type: 'PROJECT', title: `Build something with ${skill.name}`, description: `Apply ${skill.name} in a practical project`, estimatedHours: 20, url: '#' }
-        );
-    }
-
     return {
       skillName: skill.name,
       currentLevel: currentProficiency,
       targetLevel: requiredProficiency,
-      recommendedHours: Math.round(recommendedHours),
-      resources
+      recommendedHours,
+      resources,
     };
   }
+
 }
 
 export const progressService = new ProgressService();

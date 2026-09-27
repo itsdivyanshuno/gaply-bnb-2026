@@ -3,16 +3,30 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-export default function RoadmapPage() {
-  const [roadmapData, setRoadmapData] = useState<any>({
-    totalEstimatedHours: 0,
-    weeklySchedule: [],
-  });
+type RoadmapAdjustment = {
+  type?: string;
+  title?: string;
+  description?: string;
+  rationale?: string;
+  confidence?: number;
+  suggestedChanges?: Array<{
+    type?: string;
+    title?: string;
+    description?: string;
+    estimatedEffort?: number;
+    rationale?: string;
+  }>;
+};
 
+export default function RoadmapPage() {
+  const [roadmapData, setRoadmapData] = useState<any>(null);
   const [gapAnalysis, setGapAnalysis] = useState<any>(null);
+  const [adjustments, setAdjustments] = useState<RoadmapAdjustment | null>(
+    null
+  );
+  const [careerGoal, setCareerGoal] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAdjustments, setShowAdjustments] = useState(false);
 
   useEffect(() => {
     const loadRoadmap = async () => {
@@ -29,18 +43,37 @@ export default function RoadmapPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(
-          `/api/roadmap?studentId=${encodeURIComponent(userData.id)}`
-        );
+        const [roadmapResponse, goalResponse] = await Promise.all([
+          fetch(
+            `/api/roadmap?studentId=${encodeURIComponent(userData.id)}`
+          ),
+          fetch(
+            `/api/career-goal?studentId=${encodeURIComponent(userData.id)}`
+          ),
+        ]);
 
-        if (!response.ok) {
+        if (!roadmapResponse.ok) {
           throw new Error('Failed to load roadmap');
         }
 
-        const data = await response.json();
+        if (!goalResponse.ok) {
+          throw new Error('Failed to load career goal');
+        }
 
-        setGapAnalysis(data.analysis);
-        setRoadmapData(data.roadmap);
+        const roadmapResult = await roadmapResponse.json();
+        const goalResult = await goalResponse.json();
+
+        setGapAnalysis(roadmapResult.analysis);
+        setRoadmapData(roadmapResult.roadmap);
+        setCareerGoal(goalResult);
+
+        // Adjustment suggestions are optional because they depend on
+        // an existing roadmap and recent learning evidence.
+        if (roadmapResult.adjustments) {
+          setAdjustments(roadmapResult.adjustments);
+        } else {
+          setAdjustments(null);
+        }
       } catch (err) {
         console.error('Failed to load roadmap:', err);
         setError('Failed to load your personalized roadmap.');
@@ -53,16 +86,7 @@ export default function RoadmapPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" />
-          <p className="mt-4 text-sm text-slate-500">
-            Building your roadmap...
-          </p>
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error) {
@@ -77,18 +101,47 @@ export default function RoadmapPage() {
         </h2>
 
         <p className="mt-1 text-sm text-red-700">{error}</p>
+
+        <Link
+          href="/dashboard/career-goal"
+          className="mt-5 inline-flex rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white"
+        >
+          Review career goal
+        </Link>
       </div>
     );
   }
 
-  const weeks = roadmapData.weeklySchedule || [];
-  const totalHours = roadmapData.totalEstimatedHours || 0;
-  const duration = Math.ceil(totalHours / 10);
-  const readiness = gapAnalysis?.overallReadiness || 0;
+  if (!careerGoal || !roadmapData) {
+    return <SetupState />;
+  }
+
+  const weeks = Array.isArray(roadmapData.weeklySchedule)
+    ? roadmapData.weeklySchedule
+    : [];
+
+  const totalHours =
+    typeof roadmapData.totalEstimatedHours === 'number'
+      ? roadmapData.totalEstimatedHours
+      : 0;
+
+  const weeklyAvailability =
+    typeof careerGoal.weeklyAvailability === 'number'
+      ? careerGoal.weeklyAvailability
+      : null;
+
+  const timelineMonths =
+    typeof careerGoal.timelineMonths === 'number'
+      ? careerGoal.timelineMonths
+      : null;
+
+  const readiness =
+    typeof gapAnalysis?.overallReadiness === 'number'
+      ? Math.round(gapAnalysis.overallReadiness)
+      : null;
 
   return (
     <div className="space-y-6">
-
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl bg-slate-950 p-7 text-white shadow-xl md:p-9">
         <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
@@ -106,243 +159,313 @@ export default function RoadmapPage() {
           <h2 className="mt-1 max-w-3xl text-3xl font-bold tracking-tight md:text-4xl">
             Your path to becoming a{' '}
             <span className="text-indigo-300">
-              {gapAnalysis?.targetRole || 'professional'}
+              {gapAnalysis?.targetRole || careerGoal.targetRole}
             </span>
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 md:text-base">
-            A week-by-week learning plan built around your current skills,
-            career goal and identified gaps.
+            Your roadmap is generated from your career goal, current skill
+            gaps, available learning time and recommended projects.
           </p>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                Estimated duration
-              </p>
-              <p className="mt-1 text-lg font-bold">
-                ~{duration} weeks
-              </p>
-            </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <Metric
+              label="Planned learning"
+              value={`${totalHours} hrs`}
+            />
 
-            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                Total learning
-              </p>
-              <p className="mt-1 text-lg font-bold">
-                {totalHours} hrs
-              </p>
-            </div>
+            <Metric
+              label="Weekly availability"
+              value={
+                weeklyAvailability !== null
+                  ? `${weeklyAvailability} hrs`
+                  : 'Not set'
+              }
+            />
 
-            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                Current readiness
-              </p>
-              <p className="mt-1 text-lg font-bold">
-                {readiness}%
-              </p>
-            </div>
+            <Metric
+              label="Current readiness"
+              value={readiness !== null ? `${readiness}%` : 'Not assessed'}
+            />
           </div>
         </div>
       </section>
 
-      {/* Overview */}
+      {/* Goal summary */}
       <section className="grid gap-4 md:grid-cols-3">
         <InfoCard
-          label="Weekly commitment"
-          value="10 hrs"
-          detail="Based on your profile"
+          label="Target role"
+          value={careerGoal.targetRole || 'Not set'}
+          detail="From your career goal"
+          icon="◎"
+        />
+
+        <InfoCard
+          label="Timeline"
+          value={
+            timelineMonths !== null
+              ? `${timelineMonths} ${timelineMonths === 1 ? 'month' : 'months'}`
+              : 'Not set'
+          }
+          detail="Your selected learning window"
           icon="◷"
         />
 
         <InfoCard
-          label="Current readiness"
-          value={`${readiness}%`}
-          detail="Your starting point"
-          icon="◆"
-        />
-
-        <InfoCard
-          label="Target readiness"
-          value="100%"
-          detail="Goal for your target role"
+          label="Roadmap weeks"
+          value={weeks.length > 0 ? `${weeks.length}` : '—'}
+          detail="Generated learning schedule"
           icon="✓"
         />
       </section>
 
       {/* Timeline */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-7">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
-              Learning journey
+            <p className="text-sm font-medium text-indigo-600">
+              Learning timeline
             </p>
 
             <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-              Your weekly roadmap
+              Your roadmap
             </h3>
 
             <p className="mt-1 text-sm text-slate-500">
-              Follow each stage and build momentum week by week.
+              Follow the sequence generated from your current gaps and goals.
             </p>
           </div>
 
-          <button
-            onClick={() => setShowAdjustments(!showAdjustments)}
-            className="self-start rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 sm:self-auto"
-          >
-            {showAdjustments
-              ? 'Hide suggestions'
-              : 'View adjustments'}
-          </button>
+          {weeks.length > 0 && (
+            <span className="w-fit rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600">
+              {weeks.length} weeks planned
+            </span>
+          )}
         </div>
 
-        <div className="relative">
-          <div className="absolute bottom-5 left-[19px] top-5 w-px bg-slate-200 md:left-[23px]" />
+        {weeks.length > 0 ? (
+          <div className="mt-7 space-y-4">
+            {weeks.map((week: any, index: number) => {
+              const activities = Array.isArray(week.activities)
+                ? week.activities
+                : [];
 
-          <div className="space-y-6">
-            {weeks.map((week: any, index: number) => (
-              <div key={index} className="relative flex gap-4 md:gap-6">
+              const weekNumber =
+                typeof week.week === 'number' ? week.week : index + 1;
 
-                {/* Timeline marker */}
-                <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-4 border-white bg-indigo-600 text-xs font-bold text-white shadow-sm md:h-12 md:w-12">
-                  {week.week}
-                </div>
-
-                {/* Week card */}
-                <div className="min-w-0 flex-1 rounded-2xl border border-slate-100 bg-slate-50/70 p-5 transition hover:border-indigo-100 hover:bg-white hover:shadow-md md:p-6">
-
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">
-                        Week {week.week}
-                      </p>
-
-                      <h4 className="mt-1 text-lg font-bold text-slate-950">
-                        {getWeekTitle(week.week)}
-                      </h4>
+              return (
+                <div
+                  key={week.id || `week-${weekNumber}`}
+                  className="relative rounded-2xl border border-slate-200 p-5"
+                >
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-600">
+                      {weekNumber}
                     </div>
 
-                    <span className="w-fit rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm">
-                      {week.hours} hrs
-                    </span>
-                  </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            Week {weekNumber}
+                          </p>
 
-                  <div className="mt-5 space-y-2.5">
-                    {week.activities?.map(
-                      (activity: string, idx: number) => (
-                        <div
-                          key={idx}
-                          className="flex items-start gap-3 rounded-xl bg-white p-3"
-                        >
-                          <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-xs font-bold text-indigo-600">
-                            ✓
-                          </div>
-
-                          <span className="text-sm leading-6 text-slate-600">
-                            {activity}
-                          </span>
+                          <h4 className="mt-1 text-lg font-semibold text-slate-950">
+                            Learning plan
+                          </h4>
                         </div>
-                      )
-                    )}
-                  </div>
 
-                  <div className="mt-5 flex items-center justify-between border-t border-slate-200/70 pt-4">
-                    <span className="text-xs text-slate-400">
-                      {week.activities?.length || 0} activities
-                    </span>
+                        {typeof week.totalHours === 'number' && (
+                          <span className="w-fit rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600">
+                            {week.totalHours} hrs
+                          </span>
+                        )}
+                      </div>
 
-                    <span className="text-xs font-medium text-indigo-600">
-                      {week.hours}h focus
-                    </span>
+                      {week.description && (
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          {week.description}
+                        </p>
+                      )}
+
+                      {activities.length > 0 ? (
+                        <div className="mt-4 space-y-2">
+                          {activities.map((activity: any, activityIndex: number) => (
+                            <div
+                              key={
+                                activity.id ||
+                                `${weekNumber}-${activityIndex}`
+                              }
+                              className="flex items-start gap-3 rounded-xl bg-slate-50 p-3"
+                            >
+                              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-semibold text-indigo-600 shadow-sm">
+                                {activityIndex + 1}
+                              </span>
+
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-slate-800">
+                                  {activity.title ||
+                                    activity.name ||
+                                    'Learning activity'}
+                                </p>
+
+                                {activity.description && (
+                                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                                    {activity.description}
+                                  </p>
+                                )}
+                              </div>
+
+                              {typeof activity.estimatedHours === 'number' && (
+                                <span className="shrink-0 text-xs text-slate-400">
+                                  {activity.estimatedHours}h
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-500">
+                          No activities are scheduled for this week yet.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </div>
-
-        {weeks.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
-            <p className="font-medium text-slate-700">
+        ) : (
+          <div className="mt-7 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+            <p className="font-medium text-slate-800">
               No roadmap has been generated yet.
             </p>
 
-            <p className="mt-1 text-sm text-slate-400">
-              Complete your profile and career goal to create one.
+            <p className="mt-1 text-sm text-slate-500">
+              Update your career goal and make sure your learning availability
+              and timeline are set.
             </p>
+
+            <Link
+              href="/dashboard/career-goal"
+              className="mt-5 inline-flex rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white"
+            >
+              Update career goal
+            </Link>
           </div>
         )}
       </section>
 
       {/* Adjustment suggestions */}
-      {showAdjustments && (
-        <section className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-6 md:p-8">
-          <div className="mb-6">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
-              Optimization suggestions
+      {adjustments?.suggestedChanges?.length ? (
+        <section className="rounded-3xl border border-indigo-100 bg-indigo-50/60 p-6 md:p-7">
+          <div>
+            <p className="text-sm font-medium text-indigo-600">
+              Roadmap feedback
             </p>
 
             <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-              Fine-tune your learning plan
+              {adjustments.title || 'Suggested adjustments'}
             </h3>
 
-            <p className="mt-1 text-sm text-slate-500">
-              These areas can help you make better use of your learning time.
-            </p>
+            {adjustments.description && (
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                {adjustments.description}
+              </p>
+            )}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <SuggestionCard
-              title="Increase technical depth"
-              items={[
-                'Advanced Node.js concepts',
-                'Database optimization and indexing',
-                'System design patterns',
-                'Testing strategies and frameworks',
-              ]}
-            />
-
-            <SuggestionCard
-              title="Strengthen practical experience"
-              items={[
-                'React advanced topics',
-                'Full-stack integration projects',
-                'Deployment fundamentals',
-                'DevOps fundamentals',
-              ]}
-            />
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {adjustments.suggestedChanges.map((change, index) => (
+              <SuggestionCard
+                key={change.title || `suggestion-${index}`}
+                title={change.title || 'Roadmap suggestion'}
+                description={change.description}
+                effort={change.estimatedEffort}
+                rationale={change.rationale}
+              />
+            ))}
           </div>
         </section>
-      )}
+      ) : null}
 
       {/* Bottom CTA */}
-      <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-7 md:p-8">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+      <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 md:p-7">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
-              Keep improving
+            <p className="text-lg font-bold text-slate-950">
+              Want to change the direction?
             </p>
 
-            <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-              Your roadmap adapts as you grow.
-            </h3>
-
-            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-              Keep your profile and skills updated so your learning plan stays
-              aligned with your career goals.
+            <p className="mt-1 max-w-xl text-sm leading-6 text-slate-500">
+              Update your career goal and GAPLY will regenerate the planning
+              inputs used by your skill analysis, projects and roadmap.
             </p>
           </div>
 
           <Link
-            href="/dashboard/profile"
-            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            href="/dashboard/career-goal"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            Update profile
-            <span className="ml-2">→</span>
+            Edit career goal →
           </Link>
         </div>
       </section>
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" />
+        <p className="mt-4 text-sm text-slate-500">
+          Building your roadmap...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SetupState() {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-xl text-indigo-600">
+        ↗
+      </div>
+
+      <h2 className="mt-5 text-2xl font-bold text-slate-950">
+        Your roadmap needs a few details
+      </h2>
+
+      <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">
+        Complete your career goal, including your target role, timeline and
+        weekly learning availability. GAPLY will then generate a roadmap from
+        your actual profile and skill gaps.
+      </p>
+
+      <Link
+        href="/dashboard/career-goal"
+        className="mt-6 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
+      >
+        Set career goal →
+      </Link>
+    </div>
+  );
+}
+
+function Metric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <p className="text-xs font-medium text-slate-400">{label}</p>
+      <p className="mt-1 text-xl font-bold text-white">{value}</p>
     </div>
   );
 }
@@ -361,15 +484,15 @@ function InfoCard({
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-medium text-slate-500">{label}</p>
 
-          <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+          <p className="mt-2 break-words text-2xl font-bold tracking-tight text-slate-950">
             {value}
           </p>
         </div>
 
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-sm text-indigo-600">
+        <div className="ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm text-indigo-600">
           {icon}
         </div>
       </div>
@@ -381,41 +504,38 @@ function InfoCard({
 
 function SuggestionCard({
   title,
-  items,
+  description,
+  effort,
+  rationale,
 }: {
   title: string;
-  items: string[];
+  description?: string;
+  effort?: number;
+  rationale?: string;
 }) {
   return (
     <div className="rounded-2xl border border-indigo-100 bg-white p-5">
-      <h4 className="font-semibold text-slate-950">{title}</h4>
+      <div className="flex items-start justify-between gap-4">
+        <h4 className="font-semibold text-slate-950">{title}</h4>
 
-      <div className="mt-4 space-y-2.5">
-        {items.map((item) => (
-          <div key={item} className="flex items-center gap-3">
-            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-50 text-xs font-bold text-indigo-600">
-              +
-            </span>
-
-            <span className="text-sm text-slate-600">{item}</span>
-          </div>
-        ))}
+        {typeof effort === 'number' && (
+          <span className="shrink-0 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
+            {effort}h
+          </span>
+        )}
       </div>
+
+      {description && (
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          {description}
+        </p>
+      )}
+
+      {rationale && (
+        <p className="mt-3 border-t border-slate-100 pt-3 text-xs leading-5 text-slate-400">
+          {rationale}
+        </p>
+      )}
     </div>
   );
-}
-
-function getWeekTitle(week: number) {
-  const titles = [
-    'Build the foundation',
-    'Strengthen core skills',
-    'Deepen technical knowledge',
-    'Apply what you learned',
-    'Build practical experience',
-    'Level up your projects',
-    'Prepare for real-world work',
-    'Final preparation',
-  ];
-
-  return titles[(week - 1) % titles.length];
 }

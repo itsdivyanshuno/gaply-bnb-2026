@@ -3,36 +3,169 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
+type User = {
+  id: string;
+  name: string;
+  email: string;
+};
 
-  const [stats, setStats] = useState({
+type SkillGap = {
+  skillId: string;
+  skillName: string;
+  currentProficiency: number;
+  requiredProficiency: number;
+  gap: number;
+};
+
+type SkillResponse = {
+  analysis: {
+    targetRole: string;
+    skillGaps: SkillGap[];
+    overallReadiness: number;
+  } | null;
+  priorities: unknown[];
+  needsSetup?: boolean;
+};
+
+type ProjectResponse = {
+  recommendations: unknown[];
+  analysis: {
+    overallReadiness: number;
+  } | null;
+  needsSetup?: boolean;
+};
+
+type Stats = {
+  skillsAssessed: number;
+  skillsWithDeficit: number;
+  projectsToBuild: number;
+  overallReadiness: number | null;
+  targetRole: string | null;
+  needsSetup: boolean;
+};
+
+export default function DashboardPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [stats, setStats] = useState<Stats>({
     skillsAssessed: 0,
     skillsWithDeficit: 0,
-    overallReadiness: 0,
-    projectsCompleted: 0,
+    projectsToBuild: 0,
+    overallReadiness: null,
+    targetRole: null,
+    needsSetup: true,
   });
 
   const [authLoading, setAuthLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('gaply_user');
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    } else {
+    if (!storedUser) {
       setUser(null);
+      setAuthLoading(false);
+      return;
     }
 
-    setAuthLoading(false);
+    try {
+      const parsedUser = JSON.parse(storedUser) as User;
 
-    setStats({
-      skillsAssessed: 8,
-      skillsWithDeficit: 5,
-      overallReadiness: 62,
-      projectsCompleted: 3,
-    });
+      if (!parsedUser?.id) {
+        localStorage.removeItem('gaply_user');
+        setUser(null);
+        setAuthLoading(false);
+        return;
+      }
+
+      setUser(parsedUser);
+      setAuthLoading(false);
+      loadDashboardData(parsedUser.id);
+    } catch (error) {
+      console.error('Failed to read stored user:', error);
+      localStorage.removeItem('gaply_user');
+      setUser(null);
+      setAuthLoading(false);
+    }
   }, []);
+
+  async function loadDashboardData(studentId: string) {
+    setDataLoading(true);
+    setError('');
+
+    try {
+      const [skillsResponse, projectsResponse] = await Promise.all([
+        fetch(`/api/skills?studentId=${encodeURIComponent(studentId)}`),
+        fetch(`/api/projects?studentId=${encodeURIComponent(studentId)}`),
+      ]);
+
+      const skillsData =
+        (await skillsResponse.json()) as SkillResponse;
+
+      const projectsData =
+        (await projectsResponse.json()) as ProjectResponse;
+
+      if (!skillsResponse.ok && !projectsResponse.ok) {
+        throw new Error(
+          skillsData && 'error' in skillsData
+            ? String((skillsData as unknown as { error: string }).error)
+            : 'Failed to load dashboard data'
+        );
+      }
+
+      const analysis = skillsData.analysis;
+
+      const skillGaps = Array.isArray(analysis?.skillGaps)
+        ? analysis.skillGaps
+        : [];
+
+      const skillsWithDeficit = skillGaps.filter(
+        (skill) => skill.gap < 0
+      ).length;
+
+      const recommendations = Array.isArray(
+        projectsData?.recommendations
+      )
+        ? projectsData.recommendations
+        : [];
+
+      setStats({
+        skillsAssessed: skillGaps.filter(
+          (skill) => skill.currentProficiency > 0
+        ).length,
+        skillsWithDeficit,
+        projectsToBuild: recommendations.length,
+        overallReadiness:
+          typeof analysis?.overallReadiness === 'number'
+            ? analysis.overallReadiness
+            : null,
+        targetRole: analysis?.targetRole ?? null,
+        needsSetup:
+          Boolean(skillsData?.needsSetup) ||
+          Boolean(projectsData?.needsSetup) ||
+          !analysis,
+      });
+    } catch (error) {
+      console.error('Dashboard data error:', error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to load your dashboard data.'
+      );
+
+      setStats({
+        skillsAssessed: 0,
+        skillsWithDeficit: 0,
+        projectsToBuild: 0,
+        overallReadiness: null,
+        targetRole: null,
+        needsSetup: true,
+      });
+    } finally {
+      setDataLoading(false);
+    }
+  }
 
   if (authLoading) {
     return (
@@ -48,18 +181,22 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-    window.location.href = '/signin';
+    if (typeof window !== 'undefined') {
+      window.location.href = '/signin';
+    }
+
     return null;
   }
 
   const firstName =
-    user?.name?.split(' ')[0] ||
-    user?.firstName ||
-    'there';
+    user.name?.split(' ')[0] || 'there';
+
+  const readiness = stats.overallReadiness;
+  const readinessLabel =
+    readiness === null ? 'Not assessed' : `${readiness}%`;
 
   return (
     <div className="space-y-6">
-
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl bg-slate-950 p-7 text-white shadow-xl md:p-9">
         <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
@@ -79,16 +216,23 @@ export default function DashboardPage() {
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 md:text-base">
-            Track your skills, projects and learning progress in one place.
-            Small progress today compounds into bigger opportunities.
+            {stats.targetRole
+              ? `Your dashboard is tracking your progress toward becoming a ${stats.targetRole}.`
+              : 'Set your career goal and skills to unlock your personalized GAPLY analysis.'}
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              href="/dashboard/roadmap"
+              href={
+                stats.needsSetup
+                  ? '/dashboard/career-goal'
+                  : '/dashboard/roadmap'
+              }
               className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
             >
-              View roadmap →
+              {stats.needsSetup
+                ? 'Set career goal →'
+                : 'View roadmap →'}
             </Link>
 
             <Link
@@ -101,26 +245,47 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* Error */}
+      {error && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Stats */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Skills assessed"
-          value={stats.skillsAssessed}
-          detail="out of 12 core skills"
+          value={dataLoading ? '—' : stats.skillsAssessed}
+          detail={
+            stats.needsSetup
+              ? 'add skills to begin'
+              : 'skills currently analyzed'
+          }
           icon="◆"
         />
 
         <StatCard
           label="Skills to improve"
-          value={stats.skillsWithDeficit}
-          detail="need attention"
+          value={dataLoading ? '—' : stats.skillsWithDeficit}
+          detail={
+            stats.skillsWithDeficit > 0
+              ? 'need attention'
+              : stats.needsSetup
+                ? 'analysis not started'
+                : 'no current deficits'
+          }
           icon="↗"
         />
 
         <StatCard
-          label="Projects completed"
-          value={stats.projectsCompleted}
-          detail="hands-on experience"
+          label="Projects to build"
+          value={dataLoading ? '—' : stats.projectsToBuild}
+          detail={
+            stats.projectsToBuild > 0
+              ? 'recommended for your gaps'
+              : 'no recommendations yet'
+          }
           icon="▣"
         />
 
@@ -132,7 +297,7 @@ export default function DashboardPage() {
               </p>
 
               <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-                {stats.overallReadiness}%
+                {dataLoading ? '—' : readinessLabel}
               </p>
             </div>
 
@@ -144,19 +309,52 @@ export default function DashboardPage() {
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
             <div
               className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-500 transition-all"
-              style={{ width: `${stats.overallReadiness}%` }}
+              style={{
+                width: `${readiness ?? 0}%`,
+              }}
             />
           </div>
 
           <p className="mt-2 text-xs text-slate-400">
-            towards your career goal
+            {readiness === null
+              ? 'complete your career setup to get assessed'
+              : 'of required role skills currently met'}
           </p>
         </div>
       </section>
 
+      {/* Setup prompt */}
+      {stats.needsSetup && !dataLoading && (
+        <section className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+                Get started
+              </p>
+
+              <h3 className="mt-1 text-xl font-bold tracking-tight text-slate-950">
+                Your personalized analysis starts with your career goal.
+              </h3>
+
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Tell GAPLY what role you are targeting, then add your current
+                skills. We&apos;ll calculate the gaps and recommend projects
+                based on your actual profile.
+              </p>
+            </div>
+
+            <Link
+              href="/dashboard/career-goal"
+              className="shrink-0 rounded-xl bg-indigo-600 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+            >
+              Set career goal
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* Main content */}
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-
         {/* Quick actions */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-6">
@@ -165,11 +363,15 @@ export default function DashboardPage() {
             </p>
 
             <h3 className="mt-1 text-xl font-bold tracking-tight text-slate-950">
-              Keep your momentum going
+              {stats.needsSetup
+                ? 'Build your GAPLY profile'
+                : 'Keep your momentum going'}
             </h3>
 
             <p className="mt-1 text-sm text-slate-500">
-              Pick up where you left off.
+              {stats.needsSetup
+                ? 'Complete the basics so GAPLY can personalize your path.'
+                : 'Use your analysis to decide what to work on next.'}
             </p>
           </div>
 
@@ -178,21 +380,21 @@ export default function DashboardPage() {
               href="/dashboard/profile"
               icon="◉"
               title="Update profile"
-              description="Keep your career information current."
+              description="Keep your education and availability current."
             />
 
             <ActionCard
               href="/dashboard/skills"
               icon="◆"
-              title="Analyze skill gaps"
-              description="See which skills need more attention."
+              title="Add & analyze skills"
+              description="Tell GAPLY what you already know."
             />
 
             <ActionCard
               href="/dashboard/projects"
               icon="▣"
               title="Explore projects"
-              description="Find projects that build real experience."
+              description="Find projects matched to your skill gaps."
             />
 
             <ActionCard
@@ -204,37 +406,78 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Activity */}
+        {/* Current status */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-6">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
-              Activity
+              Current status
             </p>
 
             <h3 className="mt-1 text-xl font-bold tracking-tight text-slate-950">
-              Recent progress
+              {stats.needsSetup
+                ? 'Nothing is being assumed'
+                : 'Your analysis is live'}
             </h3>
           </div>
 
-          <div className="space-y-5">
-            <Activity
-              icon="✓"
-              title="Completed JavaScript Basics"
-              detail="2 hours ago · +5 pts to JavaScript"
-            />
+          {stats.needsSetup ? (
+            <div className="rounded-2xl bg-slate-50 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
+                ✦
+              </div>
 
-            <Activity
-              icon="→"
-              title="Started Node.js Module"
-              detail="Yesterday · Enrolled in course"
-            />
+              <h4 className="mt-4 text-sm font-semibold text-slate-900">
+                Start with your real information
+              </h4>
 
-            <Activity
-              icon="◉"
-              title="Updated Profile"
-              detail="Today · Added education details"
-            />
-          </div>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                GAPLY won&apos;t show sample skills, fake progress, or
+                placeholder readiness. Your dashboard updates from your own
+                profile, skills, goals and recommendations.
+              </p>
+
+              <Link
+                href="/dashboard/career-goal"
+                className="mt-4 inline-flex text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+              >
+                Configure career goal →
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <StatusRow
+                label="Target role"
+                value={stats.targetRole || 'Not set'}
+              />
+
+              <StatusRow
+                label="Skills with data"
+                value={`${stats.skillsAssessed}`}
+              />
+
+              <StatusRow
+                label="Skill gaps"
+                value={`${stats.skillsWithDeficit}`}
+              />
+
+              <StatusRow
+                label="Recommended projects"
+                value={`${stats.projectsToBuild}`}
+              />
+
+              <StatusRow
+                label="Readiness"
+                value={readinessLabel}
+              />
+
+              <Link
+                href="/dashboard/roadmap"
+                className="block rounded-xl bg-slate-950 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                Continue learning →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
     </div>
@@ -248,7 +491,7 @@ function StatCard({
   icon,
 }: {
   label: string;
-  value: number;
+  value: string | number;
   detail: string;
   icon: string;
 }) {
@@ -256,7 +499,9 @@ function StatCard({
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">{label}</p>
+          <p className="text-sm font-medium text-slate-500">
+            {label}
+          </p>
 
           <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
             {value}
@@ -308,25 +553,19 @@ function ActionCard({
   );
 }
 
-function Activity({
-  icon,
-  title,
-  detail,
+function StatusRow({
+  label,
+  value,
 }: {
-  icon: string;
-  title: string;
-  detail: string;
+  label: string;
+  value: string;
 }) {
   return (
-    <div className="flex gap-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm font-semibold text-indigo-600">
-        {icon}
-      </div>
-
-      <div className="min-w-0">
-        <h4 className="text-sm font-semibold text-slate-900">{title}</h4>
-        <p className="mt-1 text-xs text-slate-400">{detail}</p>
-      </div>
+    <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+      <span className="text-sm text-slate-500">{label}</span>
+      <span className="max-w-[55%] truncate text-right text-sm font-semibold text-slate-900">
+        {value}
+      </span>
     </div>
   );
 }
