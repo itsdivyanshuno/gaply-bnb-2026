@@ -1,6 +1,15 @@
 'use client';
+
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+
+const emptyForm = {
+  targetRole: '',
+  experienceLevel: '' as 'Beginner' | 'Intermediate' | 'Advanced' | '',
+  timelineMonths: '',
+  preferredTechnologies: '',
+  weeklyAvailability: '',
+};
 
 export default function CareerGoalPage() {
   const [user, setUser] = useState<any>(null);
@@ -8,27 +17,22 @@ export default function CareerGoalPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    targetRole: '',
-    experienceLevel: '' as 'Beginner' | 'Intermediate' | 'Advanced' | '',
-    timelineMonths: '',
-    preferredTechnologies: '',
-    weeklyAvailability: ''
-  });
+  const [formData, setFormData] = useState(emptyForm);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    // Load user data from localStorage
     const storedUser = localStorage.getItem('gaply_user');
+
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      loadCareerGoal(JSON.parse(storedUser).id);
+      const userData = JSON.parse(storedUser);
+      setUser(userData);
+      loadCareerGoal(userData.id);
     } else {
       setUser(null);
     }
+
     setAuthLoading(false);
 
-    // Handle storage events for multi-tab sync
     const handleStorageEvent = (e: StorageEvent) => {
       if (e.key === 'gaply_user') {
         if (e.newValue) {
@@ -39,18 +43,13 @@ export default function CareerGoalPage() {
           setUser(null);
           setCareerGoal(null);
           setShowForm(false);
-          setFormData({
-            targetRole: '',
-            experienceLevel: '' as 'Beginner' | 'Intermediate' | 'Advanced' | '',
-            timelineMonths: '',
-            preferredTechnologies: '',
-            weeklyAvailability: ''
-          });
+          setFormData(emptyForm);
         }
       }
     };
 
     window.addEventListener('storage', handleStorageEvent);
+
     return () => window.removeEventListener('storage', handleStorageEvent);
   }, []);
 
@@ -75,8 +74,7 @@ export default function CareerGoalPage() {
         setFormData({
           targetRole: existingGoal.targetRole || '',
           experienceLevel: existingGoal.experienceLevel || '',
-          timelineMonths:
-            existingGoal.timelineMonths?.toString() || '',
+          timelineMonths: existingGoal.timelineMonths?.toString() || '',
           preferredTechnologies: Array.isArray(
             existingGoal.preferredTechnologies
           )
@@ -147,332 +145,580 @@ export default function CareerGoalPage() {
 
   const handleCancel = () => {
     setShowForm(false);
-    // Reset form to current career goal values or empty
+
     if (careerGoal) {
       setFormData({
-        targetRole: careerGoal.targetRole,
+        targetRole: careerGoal.targetRole || '',
         experienceLevel: careerGoal.experienceLevel || '',
         timelineMonths: careerGoal.timelineMonths?.toString() || '',
-        preferredTechnologies: Array.isArray(careerGoal.preferredTechnologies)
+        preferredTechnologies: Array.isArray(
+          careerGoal.preferredTechnologies
+        )
           ? careerGoal.preferredTechnologies.join(', ')
           : String(careerGoal.preferredTechnologies || ''),
-        weeklyAvailability: careerGoal.weeklyAvailability?.toString() || ''
+        weeklyAvailability:
+          careerGoal.weeklyAvailability?.toString() || '',
       });
     } else {
-      setFormData({
-        targetRole: '',
-        experienceLevel: '' as 'Beginner' | 'Intermediate' | 'Advanced' | '',
-        timelineMonths: '',
-        preferredTechnologies: '',
-        weeklyAvailability: ''
-      });
+      setFormData(emptyForm);
     }
   };
 
-  // Show loading state while checking authentication
   if (authLoading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
-          <p className="mt-3 text-sm text-gray-500">Checking authentication...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState text="Checking your account..." />;
   }
 
-  // Redirect to sign in if not authenticated (after we've finished checking)
   if (!user) {
     window.location.href = '/signin';
     return null;
   }
 
   if (loading && !careerGoal) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
-          <p className="mt-3 text-sm text-gray-500">Loading your career goal...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 p-4 rounded-md">
-        <p className="text-red-600">{error}</p>
-      </div>
-    );
+    return <LoadingState text="Loading your career goal..." />;
   }
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Career Goal Management
-            </h2>
-            <p className="text-sm text-gray-500">
-              Define your target role and learning objectives to get personalized recommendations
-            </p>
+      {/* Hero */}
+      <section className="relative overflow-hidden rounded-3xl bg-slate-950 p-7 text-white shadow-xl md:p-9">
+        <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
+
+        <div className="relative">
+          <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-lg">
+            ◎
           </div>
-          <div className="flex space-x-3">
-            {!showForm && (
+
+          <p className="text-sm font-medium text-indigo-300">
+            Career direction
+          </p>
+
+          <h2 className="mt-1 max-w-3xl text-3xl font-bold tracking-tight md:text-4xl">
+            {careerGoal ? (
+              <>
+                Your goal:{' '}
+                <span className="text-indigo-300">
+                  {careerGoal.targetRole}
+                </span>
+              </>
+            ) : (
+              <>
+                Define where you want to{' '}
+                <span className="text-indigo-300">go next.</span>
+              </>
+            )}
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 md:text-base">
+            Set your target role, learning timeline and technology preferences
+            so GAPLY can personalize your skill analysis, projects and roadmap.
+          </p>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            {careerGoal ? (
+              <>
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Timeline
+                  </p>
+                  <p className="mt-1 text-lg font-bold">
+                    {careerGoal.timelineMonths
+                      ? `${careerGoal.timelineMonths} months`
+                      : 'Flexible'}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Weekly focus
+                  </p>
+                  <p className="mt-1 text-lg font-bold">
+                    {careerGoal.weeklyAvailability
+                      ? `${careerGoal.weeklyAvailability} hrs`
+                      : 'Flexible'}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Level
+                  </p>
+                  <p className="mt-1 text-lg font-bold">
+                    {careerGoal.experienceLevel || 'Not set'}
+                  </p>
+                </div>
+              </>
+            ) : (
               <button
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus-ring-offset-2"
+                className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
               >
-                {careerGoal ? 'Update Goal' : 'Set Career Goal'}
-              </button>
-            )}
-            {showForm && (
-              <button
-                onClick={handleCancel}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
-              >
-                Cancel
+                Set your career goal →
               </button>
             )}
           </div>
         </div>
+      </section>
+
+      {error && (
+        <div className="rounded-2xl border border-red-100 bg-red-50 p-4">
+          <p className="text-sm font-medium text-red-700">{error}</p>
+        </div>
+      )}
+
+      {/* Main goal card */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+              Your career target
+            </p>
+
+            <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
+              {careerGoal ? 'Your current goal' : 'Create your career goal'}
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-500">
+              {careerGoal
+                ? 'Keep these details updated as your plans evolve.'
+                : 'Tell GAPLY what you are working towards.'}
+            </p>
+          </div>
+
+          {!showForm && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            >
+              {careerGoal ? 'Update goal' : 'Set goal'}
+              <span className="ml-2">→</span>
+            </button>
+          )}
+
+          {showForm && (
+            <button
+              onClick={handleCancel}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
 
         {showForm && (
-          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">
-                Target Role
-              </label>
-              <input
-                type="text"
-                id="target-role"
-                value={formData.targetRole}
-                onChange={(e) => setFormData({ ...formData, targetRole: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="e.g., Full Stack Developer"
-                required
-              />
-            </div>
-
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">
-                Experience Level
-              </label>
-              <select
-                id="experience-level"
-                value={formData.experienceLevel}
-                onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value as any })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <FormField
+                label="Target role"
+                hint="The role you are preparing for."
+                className="md:col-span-2"
               >
-                <option value="">Select experience level</option>
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-              </select>
+                <input
+                  type="text"
+                  value={formData.targetRole}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      targetRole: e.target.value,
+                    })
+                  }
+                  className={inputClass}
+                  placeholder="e.g. Full Stack Developer"
+                  required
+                />
+              </FormField>
+
+              <FormField
+                label="Experience level"
+                hint="Choose your current level."
+              >
+                <select
+                  value={formData.experienceLevel}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      experienceLevel: e.target.value as any,
+                    })
+                  }
+                  className={inputClass}
+                >
+                  <option value="">Select experience level</option>
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
+              </FormField>
+
+              <FormField
+                label="Timeline"
+                hint="How long do you plan to work towards this goal?"
+              >
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.timelineMonths}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        timelineMonths: e.target.value,
+                      })
+                    }
+                    className={`${inputClass} pr-20`}
+                    placeholder="6"
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-slate-400">
+                    months
+                  </span>
+                </div>
+              </FormField>
+
+              <FormField
+                label="Preferred technologies"
+                hint="Separate technologies with commas."
+                className="md:col-span-2"
+              >
+                <input
+                  type="text"
+                  value={formData.preferredTechnologies}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      preferredTechnologies: e.target.value,
+                    })
+                  }
+                  className={inputClass}
+                  placeholder="JavaScript, React, Node.js, PostgreSQL"
+                />
+              </FormField>
+
+              <FormField
+                label="Weekly availability"
+                hint="Hours you can dedicate to learning each week."
+              >
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    max="168"
+                    value={formData.weeklyAvailability}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        weeklyAvailability: e.target.value,
+                      })
+                    }
+                    className={`${inputClass} pr-16`}
+                    placeholder="10"
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-slate-400">
+                    hrs/wk
+                  </span>
+                </div>
+              </FormField>
             </div>
 
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">
-                Timeline (months)
-              </label>
-              <input
-                type="number"
-                id="timeline-months"
-                value={formData.timelineMonths}
-                onChange={(e) => setFormData({ ...formData, timelineMonths: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                min="1"
-                placeholder="e.g., 6"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                How many months do you plan to achieve this goal?
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">
-                Preferred Technologies (comma-separated)
-              </label>
-              <input
-                type="text"
-                id="preferred-technologies"
-                value={formData.preferredTechnologies}
-                onChange={(e) => setFormData({ ...formData, preferredTechnologies: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="e.g., JavaScript, React, Node.js, PostgreSQL"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                List technologies you want to focus on, separated by commas
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">
-                Weekly Availability (hours)
-              </label>
-              <input
-                type="number"
-                id="weekly-availability"
-                value={formData.weeklyAvailability}
-                onChange={(e) => setFormData({ ...formData, weeklyAvailability: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                min="1"
-                max="168"
-                placeholder="e.g., 10"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                How many hours per week can you dedicate to learning?
-              </p>
-            </div>
-
-            <div className="flex justify-end space-x-3">
+            <div className="flex flex-col justify-end gap-3 border-t border-slate-100 pt-6 sm:flex-row">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Cancel
               </button>
+
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus-ring-offset-2"
+                className="rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? 'Saving...' : 'Save Goal'}
+                {loading ? 'Saving...' : 'Save career goal →'}
               </button>
             </div>
           </form>
         )}
 
         {!showForm && careerGoal && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                Your Career Goal
-              </h3>
-              <p className="text-sm text-gray-500">
-                Last updated: {new Date(careerGoal.updatedAt).toLocaleDateString()}
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <GoalDetail
+              label="Target role"
+              value={careerGoal.targetRole}
+              icon="◎"
+              highlight
+            />
+
+            <GoalDetail
+              label="Experience level"
+              value={careerGoal.experienceLevel || 'Not specified'}
+              icon="◆"
+            />
+
+            <GoalDetail
+              label="Timeline"
+              value={
+                careerGoal.timelineMonths
+                  ? `${careerGoal.timelineMonths} months`
+                  : 'Not specified'
+              }
+              icon="◷"
+            />
+
+            <GoalDetail
+              label="Weekly availability"
+              value={
+                careerGoal.weeklyAvailability
+                  ? `${careerGoal.weeklyAvailability} hours/week`
+                  : 'Not specified'
+              }
+              icon="↗"
+            />
+
+            {((Array.isArray(careerGoal.preferredTechnologies) &&
+              careerGoal.preferredTechnologies.length > 0) ||
+              (typeof careerGoal.preferredTechnologies === 'string' &&
+                careerGoal.preferredTechnologies.length > 0)) && (
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5 sm:col-span-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-sm text-indigo-600">
+                    ◆
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                      Preferred technologies
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(Array.isArray(careerGoal.preferredTechnologies)
+                        ? careerGoal.preferredTechnologies
+                        : String(careerGoal.preferredTechnologies || '')
+                            .split(',')
+                      ).map((tech: string) => (
+                        <span
+                          key={tech}
+                          className="rounded-lg border border-indigo-100 bg-white px-3 py-1.5 text-xs font-medium text-indigo-700"
+                        >
+                          {tech.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {careerGoal.updatedAt && (
+              <p className="text-xs text-slate-400 sm:col-span-2">
+                Last updated{' '}
+                {new Date(careerGoal.updatedAt).toLocaleDateString()}
               </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Target Role:</h4>
-                <p className="text-sm">{careerGoal.targetRole}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Experience Level:</h4>
-                <p className="text-sm capitalize">{careerGoal.experienceLevel || 'Not specified'}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Timeline:</h4>
-                <p className="text-sm">
-                  {careerGoal.timelineMonths ? `${careerGoal.timelineMonths} months` : 'Not specified'}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Weekly Availability:</h4>
-                <p className="text-sm">
-                  {careerGoal.weeklyAvailability ? `${careerGoal.weeklyAvailability} hours/week` : 'Not specified'}
-                </p>
-              </div>
-            </div>
-
-            {((Array.isArray(careerGoal.preferredTechnologies) && careerGoal.preferredTechnologies.length > 0) || (typeof careerGoal.preferredTechnologies === 'string' && careerGoal.preferredTechnologies.length > 0)) && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Preferred Technologies:</h4>
-                <p className="text-sm">{Array.isArray(careerGoal.preferredTechnologies)
-                  ? careerGoal.preferredTechnologies.join(', ')
-                  : String(careerGoal.preferredTechnologies || '')}</p>
-              </div>
             )}
           </div>
         )}
 
         {!showForm && !careerGoal && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">
-              You haven't set a career goal yet. Define your target role to get personalized learning recommendations.
+          <div className="mt-8 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-xl text-indigo-600">
+              ◎
+            </div>
+
+            <h4 className="mt-5 text-lg font-semibold text-slate-900">
+              Your career direction starts here
+            </h4>
+
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+              Set a target role and GAPLY will use it to personalize your
+              skills analysis, projects and learning roadmap.
             </p>
-            <Link
-              href="/dashboard/career-goal"
-              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus-ring-offset-2"
+
+            <button
               onClick={() => setShowForm(true)}
+              className="mt-6 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
             >
-              Set Your Career Goal
-            </Link>
+              Create career goal →
+            </button>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* How it works section */}
-      <div className="mt-6 pt-6 border-t border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          How Career Goals Work
-        </h3>
-        <div className="space-y-3">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <svg className="h-5 w-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2z"></path>
-                </svg>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium">Personalized Learning Path</h4>
-              <p className="text-sm text-gray-500">
-                Your career goal drives personalized skill gap analysis and project recommendations
-              </p>
-            </div>
-          </div>
+      {/* How it works */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <div className="mb-7">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+            How GAPLY uses this
+          </p>
 
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <svg className="h-5 w-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 12l2 2 4-4m5 6V9a3 3 0 00-5.9-1.4l.8-.1.2-.2a1 1 0 00-1.2-.8l-.5-.2a1 1 0 00-1-1V7a3 3 0 00-5.6-.4l-.3-.1a1 1 0 00-1.1 0l-.3.1a1 1 0 00-.8.5l-.2.2V10a1 1 0 011 1h1"></path>
-                </svg>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium">Skill-Based Recommendations</h4>
-              <p className="text-sm text-gray-500">
-                We identify the skills you need to develop and recommend projects to build them
-              </p>
-            </div>
-          </div>
+          <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
+            Your goal shapes the rest of your workspace.
+          </h3>
 
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <svg className="h-5 w-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium">Progress Tracking</h4>
-              <p className="text-sm text-gray-500">
-                Track your progress toward your goal with milestones and evidence of learning
-              </p>
-            </div>
-          </div>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+            One career target connects your skills, projects and roadmap into
+            a single learning direction.
+          </p>
         </div>
-      </div>
 
-      {/* Call to action */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <FeatureCard
+            number="01"
+            icon="◆"
+            title="Skill analysis"
+            description="Your target role helps identify the skills you need and the gaps to work on."
+          />
+
+          <FeatureCard
+            number="02"
+            icon="▣"
+            title="Project matching"
+            description="Projects are selected around the skills that matter for your career direction."
+          />
+
+          <FeatureCard
+            number="03"
+            icon="↗"
+            title="Learning roadmap"
+            description="Your timeline and availability help shape a practical week-by-week plan."
+          />
+        </div>
+      </section>
+
       {careerGoal && (
-        <div className="mt-6">
-          <Link
-            href="/dashboard/roadmap"
-            className="w-full inline-flex justify-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus-ring-offset-2"
-          >
-            View Your Personalized Roadmap
-          </Link>
-        </div>
+        <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-7 md:p-8">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+                Ready to build?
+              </p>
+
+              <h3 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
+                Turn your goal into a roadmap.
+              </h3>
+
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+                See the skills and activities you should focus on next.
+              </p>
+            </div>
+
+            <Link
+              href="/dashboard/roadmap"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            >
+              View roadmap
+              <span className="ml-2">→</span>
+            </Link>
+          </div>
+        </section>
       )}
+    </div>
+  );
+}
+
+const inputClass =
+  'block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10';
+
+function FormField({
+  label,
+  hint,
+  children,
+  className = '',
+}: {
+  label: string;
+  hint: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <label className="block text-sm font-semibold text-slate-800">
+        {label}
+      </label>
+
+      <p className="mb-2 mt-1 text-xs text-slate-400">{hint}</p>
+
+      {children}
+    </div>
+  );
+}
+
+function GoalDetail({
+  label,
+  value,
+  icon,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  icon: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl border p-5 ${
+        highlight
+          ? 'border-indigo-100 bg-indigo-50/50'
+          : 'border-slate-100 bg-slate-50/70'
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm ${
+            highlight
+              ? 'bg-indigo-600 text-white'
+              : 'bg-white text-indigo-600'
+          }`}
+        >
+          {icon}
+        </div>
+
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+            {label}
+          </p>
+
+          <p className="mt-1 break-words text-sm font-semibold text-slate-900">
+            {value}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeatureCard({
+  number,
+  icon,
+  title,
+  description,
+}: {
+  number: string;
+  icon: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 transition hover:bg-white hover:shadow-md">
+      <div className="flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-600">
+          {icon}
+        </div>
+
+        <span className="text-xs font-bold text-slate-300">{number}</span>
+      </div>
+
+      <h4 className="mt-5 font-semibold text-slate-950">{title}</h4>
+
+      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+    </div>
+  );
+}
+
+function LoadingState({ text }: { text: string }) {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" />
+        <p className="mt-4 text-sm text-slate-500">{text}</p>
+      </div>
     </div>
   );
 }
