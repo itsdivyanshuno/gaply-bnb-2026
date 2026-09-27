@@ -256,40 +256,64 @@ export class RoadmapService {
         }
       });
 
-// Clear existing items and their progress records
+// Preserve existing roadmap progress while updating the plan.
 const existingItems = await this.roadmapItemRepo.findMany({
-  where: { roadmapId: roadmapId }
+  where: { roadmapId }
 });
 
-for (const item of existingItems) {
-  // Progress records reference RoadmapItem, so remove them first
-  await this.progressRepo.deleteMany({
-    where: {
-      roadmapItemId: item.id
-    }
-  });
+const existingById = new Map(
+  existingItems.map(item => [item.id, item])
+);
 
-  await this.roadmapItemRepo.delete({
-    where: { id: item.id }
-  });
-}
-      // Add new items
-      for (const item of allItems) {
-        await this.roadmapItemRepo.create({
-          data: {
-            id: item.id,
-            roadmapId,
-            title: item.title,
-            description: item.description,
-            type: item.type,
-            estimatedEffort: item.estimatedEffort,
-            order: item.order,
-            dependencies: JSON.stringify(item.dependencies),
-            completed: false,
-            completedAt: null
-          }
-        });
+const newItemIds = new Set(allItems.map(item => item.id));
+
+// Update or create roadmap items without deleting progress.
+for (const item of allItems) {
+  const existing = existingById.get(item.id);
+
+  if (existing) {
+    await this.roadmapItemRepo.update({
+      where: { id: existing.id },
+      data: {
+        title: item.title,
+        description: item.description,
+        type: item.type,
+        estimatedEffort: item.estimatedEffort,
+        order: item.order,
+        dependencies: JSON.stringify(item.dependencies)
       }
+    });
+  } else {
+    await this.roadmapItemRepo.create({
+      data: {
+        id: item.id,
+        roadmapId,
+        title: item.title,
+        description: item.description,
+        type: item.type,
+        estimatedEffort: item.estimatedEffort,
+        order: item.order,
+        dependencies: JSON.stringify(item.dependencies),
+        completed: false,
+        completedAt: null
+      }
+    });
+  }
+}
+
+// Remove only roadmap items that are no longer part of the regenerated plan.
+// Their progress records are removed first because they reference the item.
+for (const existing of existingItems) {
+  if (!newItemIds.has(existing.id)) {
+    await this.progressRepo.deleteMany({
+      where: { roadmapItemId: existing.id }
+    });
+
+    await this.roadmapItemRepo.delete({
+      where: { id: existing.id }
+    });
+  }
+}
     } else {
       // Create new roadmap
       roadmapId = await this.roadmapRepo.create({
