@@ -37,6 +37,7 @@
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-preset-env": "^11.5.4",
     "prisma": "^7.10.0",
+    "tsx": "^4.23.15",
     "typescript": "5"
   },
   "allowScripts": {

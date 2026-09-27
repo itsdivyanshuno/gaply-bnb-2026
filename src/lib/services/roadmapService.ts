@@ -256,14 +256,23 @@ export class RoadmapService {
         }
       });
 
-      // Clear existing items
-      const existingItems = await this.roadmapItemRepo.findMany({
-        where: { roadmapId: roadmapId }
-      });
-      for (const item of existingItems) {
-        await this.roadmapItemRepo.delete({ where: { id: item.id } });
-      }
+// Clear existing items and their progress records
+const existingItems = await this.roadmapItemRepo.findMany({
+  where: { roadmapId: roadmapId }
+});
 
+for (const item of existingItems) {
+  // Progress records reference RoadmapItem, so remove them first
+  await this.progressRepo.deleteMany({
+    where: {
+      roadmapItemId: item.id
+    }
+  });
+
+  await this.roadmapItemRepo.delete({
+    where: { id: item.id }
+  });
+}
       // Add new items
       for (const item of allItems) {
         await this.roadmapItemRepo.create({
