@@ -4,333 +4,346 @@
 
 > **Predict your gaps. Prioritize your growth. Build your career.**
 
-GAPLY is an AI-powered career development platform built for **PS 05 — Education & Employability: AI Skill-Gap & Personalized Learning Agent**.
+---
 
-It helps students move from a career goal to an actionable, measurable and continuously adapting learning path.
+## 🎥 Hackathon Demo
+
+[▶️ Watch GAPLY Demo Video](YOUR_VIDEO_LINK_HERE)
+
+## 📑 Hackathon Presentation
+
+[📊 View GAPLY Hackathon PPT](https://docs.google.com/presentation/d/1RqMjsQCQxUgrOf95PitRNWezacG7awyr4jJdRnLJoyQ/edit?usp=sharing)
 
 ---
 
-## 🎯 Problem
+# 🎯 Problem Statement
 
-Students often know **what career they want**, but struggle to answer:
+### PS 05 — Education & Employability: AI Skill-Gap & Personalized Learning Agent
 
-* What skills am I currently missing?
-* Which skill should I learn first?
-* Why is that skill important for my target role?
-* What projects can demonstrate that skill?
-* How should I plan my learning around my available time?
-* What should change when my skills improve?
+Students often know the career role they want but struggle to understand:
 
-Most platforms provide static courses or generic roadmaps.
+* What skills they are missing
+* How large each skill gap is
+* Which skills they should learn first
+* Which projects can demonstrate those skills
+* How to create a realistic learning roadmap
+* How their roadmap should change as they improve
 
-**GAPLY turns career planning into a continuous feedback loop.**
+Traditional learning platforms provide courses, but they often do not continuously reason about the student's **current capability, target role, evidence, progress, and priorities together**.
 
 ---
 
-# 💡 Our Solution
+# 💡 Our Solution — GAPLY
 
-GAPLY analyzes the student's:
+**GAPLY** is an AI-powered career agent that continuously converts a student's:
 
-* Profile
-* Target career role
-* Current skill proficiency
-* Required role skills
-* Skill gaps
-* Role importance
-* Project relevance
-* Skill dependencies
-* Assessment confidence
-* Learning progress
-* Available weekly hours
+**Profile + Skills + Evidence + Progress + Career Goal**
 
-It then generates an **explainable and adaptive career roadmap**.
+into an **explainable and adaptive career roadmap**.
 
-```mermaid
-flowchart TD
-    A["👤 Student Profile"] --> B["🎯 Target Career Role"]
-    B --> C["🧠 Current Skills"]
-    C --> D["📊 Skill Gap Analysis"]
-    D --> E["⚡ Explainable Prioritization"]
-    E --> F["🛠️ Project Recommendations"]
-    E --> G["🗺️ Adaptive Roadmap"]
-    F --> G
-    G --> H["📚 Learn"]
-    H --> I["🏗️ Build"]
-    I --> J["📈 Update Progress"]
-    J --> D
-    J -. "Continuous Adaptation" .-> G
+Instead of simply telling students *what to learn*, GAPLY answers:
+
+> **What should I learn next, why does it matter, and what should I build to prove it?**
+
+### 🧠 Core Intelligence Loop
+
+```text
+Assess
+   ↓
+Prioritize
+   ↓
+Learn
+   ↓
+Build
+   ↓
+Adapt
+   ↺
 ```
 
-### Core Intelligence Loop
+As the student's proficiency changes, GAPLY recalculates the skill gaps, priorities and roadmap.
 
-**Assess → Prioritize → Learn → Build → Adapt**
+---
+
+# 🔄 How GAPLY Works
+
+```mermaid
+flowchart LR
+    A[Student Profile] --> B[Career Goal]
+    B --> C[Required Role Skills]
+    A --> D[Current Skills]
+    D --> E[Skill Gap Analysis]
+    C --> E
+    E --> F[Priority Engine]
+    F --> G[AI Career Agent]
+    G --> H[Personalized Roadmap]
+    H --> I[Learning & Projects]
+    I --> J[Evidence & Assessments]
+    J --> K[Progress Update]
+    K --> E
+```
+
+### The system continuously answers:
+
+**What is missing? → What matters most? → What should I do next? → How do I prove it? → What changed?**
 
 ---
 
 # ✨ Key Features
 
-## 🎯 1. Career Goal Engine
+## 1. 🎯 Career Goal Engine
 
-Students define:
+Students select their desired career role and define:
 
-* Target career role
-* Current experience level
-* Available weekly hours
-* Desired timeline
+* Target role
+* Current level
+* Timeline
+* Weekly availability
 
 GAPLY uses this information to personalize the entire learning journey.
 
 ---
 
-## 📊 2. Skill-Gap Analysis
+## 2. 📊 Skill-Gap Analysis
 
-GAPLY compares the student's current proficiency with the required proficiency for the selected career role.
+GAPLY compares the student's current proficiency against the required proficiency for the target role.
+
+```text
+Current Proficiency
+        ↓
+Role Requirement
+        ↓
+Skill Gap
+        ↓
+Readiness
+```
 
 Example:
 
 ```text
-JavaScript
-Current:   68
-Required:  85
-Gap:       -17
+Node.js
+
+Current:   50
+Required:  80
+
+Gap:       -30
+Status:    HIGH
 ```
 
-The system identifies whether a skill is:
-
-* 🟢 Low gap
-* 🟡 Medium gap
-* 🔴 High gap
-
-and uses the results to determine what needs attention.
+The system identifies which skills are already sufficient and which require improvement.
 
 ---
 
-## ⚡ 3. Explainable Skill Prioritization
+## 3. 🧠 Explainable Skill Prioritization
 
-GAPLY doesn't simply say:
+Not every skill gap has the same importance.
 
-> "Learn Node.js."
+GAPLY calculates a weighted priority score using factors such as:
 
-It explains **why Node.js should be prioritized**.
+* Gap size
+* Role importance
+* Project relevance
+* Skill dependencies
+* Confidence in assessment
 
-Priority is calculated using factors including:
+```mermaid
+flowchart TD
+    A[Skill Gap] --> F[Priority Engine]
+    B[Role Importance] --> F
+    C[Project Relevance] --> F
+    D[Dependencies] --> F
+    E[Assessment Confidence] --> F
+    F --> G[Priority Score]
+    G --> H[Recommended Learning Order]
+```
 
-* Skill Gap
-* Role Importance
-* Project Relevance
-* Skill Dependencies
-* Assessment Confidence
+This allows GAPLY to explain:
+
+> **Why should I focus on this skill now?**
+
+rather than simply displaying a list of skills.
+
+---
+
+# 🤖 AI Career Agent
+
+GAPLY includes a conversational career agent that works with the student's real profile and progress.
+
+The agent can answer questions such as:
+
+```text
+"What should I learn this week?"
+
+"Why should I focus on Node.js?"
+
+"What project should I build next?"
+
+"Explain my biggest skill gap."
+
+"How can I improve my readiness?"
+
+"What should I focus on for my target role?"
+```
+
+The agent uses structured student data, skill-gap analysis, prioritization and project recommendations to generate contextual responses.
+
+---
+
+# 🧩 AI Agent Flow
+
+```mermaid
+flowchart TD
+    A[Student Question] --> B[Intent Detection]
+
+    B --> C{Intent}
+
+    C -->|Weekly Plan| D[Weekly Learning Plan]
+    C -->|Skill Explanation| E[Skill Gap Explanation]
+    C -->|Project| F[Project Recommendation]
+    C -->|Roadmap| G[Adaptive Roadmap]
+    C -->|General| H[Career Guidance]
+
+    D --> I[Student Context]
+    E --> I
+    F --> I
+    G --> I
+    H --> I
+
+    I --> J[Skills + Goals + Evidence + Progress]
+    J --> K[AI Career Response]
+```
+
+---
+
+# 🗺️ Adaptive Roadmap
+
+GAPLY does not create a fixed roadmap and forget about it.
+
+The roadmap adapts when the student's skills change.
 
 ```mermaid
 flowchart LR
-    A["Skill Gap"] --> F["Priority Engine"]
-    B["Role Importance"] --> F
-    C["Project Relevance"] --> F
-    D["Dependencies"] --> F
-    E["Confidence"] --> F
-    F --> G["Priority Score"]
-    G --> H["Recommended Learning Order"]
-```
-
-This makes the recommendation **transparent and actionable**.
-
----
-
-# 🤖 4. AI Career Agent
-
-The AI Career Agent acts as an interactive career assistant.
-
-Students can ask questions such as:
-
-```text
-Why should I focus on Node.js?
-
-What should I learn this week?
-
-What skills am I missing for Full Stack Development?
-
-What project should I build next?
-
-What should I focus on after improving System Design?
-```
-
-The agent uses structured student data, skill gaps, priorities, projects and progress to generate contextual recommendations.
-
-```mermaid
-flowchart TD
-    A["Student Question"] --> B["Intent Detection"]
-    B --> C["Student Context"]
-    C --> D["Skill Gap Analysis"]
-    C --> E["Priority Analysis"]
-    C --> F["Project Recommendations"]
-    D --> G["Career Agent Reasoning"]
-    E --> G
-    F --> G
-    G --> H["Explainable Answer"]
-    H --> I["Actionable Recommendation"]
+    A[Current Roadmap] --> B[Student Learns]
+    B --> C[New Assessment / Evidence]
+    C --> D[Updated Proficiency]
+    D --> E[Recalculate Skill Gap]
+    E --> F[Recalculate Priority]
+    F --> G[Update Roadmap]
+    G --> A
 ```
 
 ### Example
 
-```text
-Student:
-"Why should I focus on System Design?"
-
-GAPLY:
-System Design is currently 55/100 while your target role
-requires 65/100.
-
-That creates a 10-point gap.
-
-It is prioritized based on:
-• role requirement
-• gap size
-• project relevance
-• dependencies
-• confidence in the current assessment
-```
-
----
-
-# 🗺️ 5. Adaptive Roadmap
-
-GAPLY generates a roadmap based on:
-
-* Skill priorities
-* Skill dependencies
-* Available weekly hours
-* Career timeline
-* Recommended projects
-
-The roadmap includes:
-
-* Learning modules
-* Practical projects
-* Estimated effort
-* Dependencies
-* Weekly schedule
-
-```mermaid
-flowchart TD
-    A["Skill Gap Analysis"] --> B["Priority Ranking"]
-    B --> C["Learning Modules"]
-    B --> D["Recommended Projects"]
-    C --> E["Effort Estimation"]
-    D --> E
-    E --> F["Weekly Availability"]
-    F --> G["Personalized Roadmap"]
-```
-
----
-
-# 🔄 6. Progress-Driven Adaptation
-
-The roadmap isn't static.
-
-When the student improves a skill, GAPLY recalculates the student's skill gap and updates the learning plan.
-
-### Example
+If a student's System Design proficiency changes:
 
 ```text
 Before
 
 System Design
 55 / 65
-Gap: -10
 
+Gap = -10
+```
 
-        ↓
+After learning:
 
-Student learns and updates progress
-
-
-        ↓
-
-After
-
+```text
 System Design
 62 / 65
-Gap: -3
 
-
-        ↓
-
-GAPLY recalculates priorities
-and adapts the roadmap
+Gap = -3
 ```
 
-This creates a continuous learning loop:
-
-```mermaid
-flowchart LR
-    A["Assess"] --> B["Prioritize"]
-    B --> C["Learn"]
-    C --> D["Build"]
-    D --> E["Measure Progress"]
-    E --> F["Update Skill Profile"]
-    F --> A
-    F -. "Adapt Roadmap" .-> B
-```
+GAPLY recognizes the improvement and recalculates the learning priorities instead of keeping the old plan unchanged.
 
 ---
 
-# 🛠️ 7. Project Recommendations
+# 📚 Personalized Weekly Planning
 
-Learning a skill is not enough.
+GAPLY considers the student's available learning time.
 
-Students also need **evidence** that they can apply it.
+For example:
+
+```text
+Weekly Availability: 15 hours
+```
+
+The system distributes learning modules and projects across the available time.
+
+Example:
+
+```text
+Week 1
+├── JavaScript       9 hrs
+└── Node.js          6 hrs
+
+Week 2
+├── Node.js          9 hrs
+└── REST APIs        6 hrs
+
+Week 3
+├── REST APIs       10 hrs
+└── PostgreSQL       5 hrs
+```
+
+This converts a large career goal into manageable weekly actions.
+
+---
+
+# 🛠️ Project Recommendations
+
+Learning alone is not enough.
+
+Students need **evidence** that they can apply their skills.
 
 GAPLY recommends projects based on:
 
-* Current skill gaps
+* Skill gaps
 * Target role
-* Skill relevance
-* Portfolio value
-* Estimated effort
+* Required technologies
+* Current proficiency
+* Portfolio relevance
 
-Example projects include:
+Example:
 
-* Full Stack Task Manager
-* E-Commerce Platform
-* Real-Time Collaboration App
-* Developer Portfolio
-* REST API Service
+```text
+Skill Gap
+    ↓
+Required Capability
+    ↓
+Project Recommendation
+    ↓
+Build
+    ↓
+Evidence
+    ↓
+Re-assessment
+```
 
-The roadmap connects **learning → building → demonstrating skills**.
+This creates a connection between:
+
+**Learning → Building → Evidence → Career Readiness**
 
 ---
 
-# 🧠 Complete GAPLY Intelligence
+# 🔁 Complete Intelligence Loop
 
 ```mermaid
 flowchart TD
-    A["👤 Student"] --> B["🎯 Career Goal"]
-
-    B --> C["📊 Skill Gap Analysis"]
-
-    C --> D["⚡ Prioritization"]
-
-    D --> E["🤖 AI Career Agent"]
-
-    D --> F["📚 Learning Plan"]
-
-    D --> G["🛠️ Project Recommendation"]
-
-    F --> H["🗺️ Adaptive Roadmap"]
-    G --> H
-
-    H --> I["📚 Learn"]
-    I --> J["🏗️ Build"]
-    J --> K["📈 Evidence & Progress"]
-
-    K --> C
-    K --> D
-    K --> H
-
-    E --> H
-    E --> I
-    E --> G
+    A[Student Profile] --> B[Assess]
+    B --> C[Skill Gap Analysis]
+    C --> D[Prioritize]
+    D --> E[Personalized Learning]
+    E --> F[Build Projects]
+    F --> G[Collect Evidence]
+    G --> H[Re-assess]
+    H --> I[Update Proficiency]
+    I --> J[Adapt Roadmap]
+    J --> C
 ```
+
+### GAPLY is built around this continuous loop:
+
+> **Assess → Prioritize → Learn → Build → Adapt**
 
 ---
 
@@ -338,67 +351,45 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["Next.js Frontend"] --> B["API Routes"]
+    A[Next.js Frontend] --> B[API Layer]
 
-    B --> C["Career Agent Service"]
-    B --> D["Skill Gap Service"]
-    B --> E["Prioritization Service"]
-    B --> F["Roadmap Service"]
-    B --> G["Progress Service"]
-    B --> H["Project Recommendation Service"]
+    B --> C[Career Goal API]
+    B --> D[Skills API]
+    B --> E[Projects API]
+    B --> F[Roadmap API]
+    B --> G[Progress API]
+    B --> H[AI Agent API]
 
-    C --> D
-    C --> E
-    C --> H
-
-    E --> D
-    F --> D
-    F --> E
-    G --> D
-    G --> F
-
-    C --> I["Prisma"]
+    C --> I[Service Layer]
     D --> I
     E --> I
     F --> I
     G --> I
     H --> I
 
-    I --> J["SQLite Database"]
+    I --> J[Skill Gap Service]
+    I --> K[Prioritization Service]
+    I --> L[Roadmap Service]
+    I --> M[Project Recommendation Service]
+    I --> N[Progress Service]
+    I --> O[Career Agent Service]
+
+    J --> P[(SQLite)]
+    K --> P
+    L --> P
+    M --> P
+    N --> P
+    O --> P
 ```
 
 ---
 
-# 🧩 Data Model
-
-```mermaid
-erDiagram
-    STUDENT ||--o| CAREER_GOAL : has
-    STUDENT ||--o{ STUDENT_SKILL : develops
-    SKILL ||--o{ STUDENT_SKILL : tracks
-
-    CAREER_GOAL }o--|| ROLE : targets
-    ROLE ||--o{ ROLE_SKILL : requires
-    SKILL ||--o{ ROLE_SKILL : defines
-
-    STUDENT ||--o{ PROJECT : builds
-    STUDENT ||--o{ EVIDENCE : provides
-    STUDENT ||--o{ ASSESSMENT : completes
-
-    STUDENT ||--o{ ROADMAP : receives
-    ROADMAP ||--o{ ROADMAP_ITEM : contains
-
-    ROADMAP_ITEM ||--o{ PROGRESS : tracks
-```
-
----
-
-# 💻 Technology Stack
+# ⚙️ Technology Stack
 
 ### Frontend
 
 * Next.js 16
-* React 18
+* React
 * TypeScript
 * Tailwind CSS
 
@@ -415,21 +406,20 @@ erDiagram
 * `@prisma/adapter-better-sqlite3`
 * `better-sqlite3`
 
-### Intelligence Layer
+### AI / Intelligence
 
-* Skill-gap analysis
-* Weighted skill prioritization
-* Explainable recommendations
-* Career Agent reasoning
+* AI-assisted career reasoning
+* Structured skill-gap analysis
+* Explainable prioritization
+* Context-aware career agent
 * Adaptive roadmap generation
-* Progress-driven recalculation
 
 ---
 
 # 📂 Project Structure
 
 ```text
-gaply-bnb/
+gaply-bnb-2026/
 │
 ├── prisma/
 │   ├── schema.prisma
@@ -471,140 +461,147 @@ gaply-bnb/
 
 ---
 
-# 🔌 API Routes
+# 🔌 API Layer
 
-| Route              | Purpose                                 |
-| ------------------ | --------------------------------------- |
-| `/api/agent`       | AI Career Agent interactions            |
-| `/api/skills`      | Skill-gap analysis and prioritization   |
-| `/api/progress`    | Update student skill progress           |
-| `/api/roadmap`     | Generate and retrieve adaptive roadmaps |
-| `/api/projects`    | Project recommendations                 |
-| `/api/career-goal` | Career goal management                  |
-
----
-
-# 🔬 How GAPLY Prioritizes Skills
-
-GAPLY combines multiple signals instead of relying only on the size of the skill gap.
-
-```text
-Priority Score
-
-    ↓
-
-Skill Gap
-    +
-Role Importance
-    +
-Project Relevance
-    +
-Dependencies
-    +
-Assessment Confidence
-
-    ↓
-
-Priority Ranking
-
-    ↓
-
-Learning Order
-```
-
-This allows the system to answer:
-
-> **“What should I work on next, and why?”**
-
-rather than simply:
-
-> **“What skills do I need?”**
+| Endpoint           | Purpose                         |
+| ------------------ | ------------------------------- |
+| `/api/career-goal` | Career goal management          |
+| `/api/skills`      | Skill-gap analysis & priorities |
+| `/api/projects`    | Project recommendations         |
+| `/api/roadmap`     | Personalized roadmap            |
+| `/api/progress`    | Skill progress updates          |
+| `/api/agent`       | AI Career Agent                 |
 
 ---
 
-# 🧪 Hackathon Demo
-
-The recommended demonstration flow is:
+# 🗃️ Data Model
 
 ```mermaid
-flowchart LR
-    A["👤 Profile"] --> B["🎯 Career Goal"]
-    B --> C["📊 Skill Gaps"]
-    C --> D["⚡ Priorities"]
-    D --> E["🤖 AI Agent"]
-    E --> F["🗺️ Roadmap"]
-    F --> G["📚 Learn"]
-    G --> H["🏗️ Build"]
-    H --> I["📈 Update Progress"]
-    I --> J["🔄 Adaptive Roadmap"]
-    J --> C
+erDiagram
+    STUDENT ||--o{ STUDENT_SKILL : has
+    STUDENT ||--o{ EVIDENCE : provides
+    STUDENT ||--o{ ASSESSMENT : takes
+    STUDENT ||--o{ ROADMAP : follows
+    STUDENT ||--|| CAREER_GOAL : has
+
+    CAREER_GOAL }o--|| ROLE : targets
+    ROLE ||--o{ ROLE_SKILL : requires
+    SKILL ||--o{ ROLE_SKILL : included_in
+
+    ROADMAP ||--o{ ROADMAP_ITEM : contains
+    ROADMAP_ITEM ||--o{ PROGRESS : tracks
+
+    STUDENT {
+        string id
+        string name
+        string education
+        int year
+        int weeklyAvailability
+    }
+
+    SKILL {
+        string id
+        string name
+    }
+
+    STUDENT_SKILL {
+        string studentId
+        string skillId
+        int proficiency
+        float confidence
+    }
+
+    CAREER_GOAL {
+        string studentId
+        string roleId
+        int timelineMonths
+        int weeklyAvailability
+    }
 ```
 
-### Demo Scenario
+---
 
-**Target Role:** Full Stack Developer
+# 🎬 Recommended Hackathon Demo Flow
 
-**Timeline:** 6 months
+The application is designed around a clear judge-friendly demo:
 
-**Availability:** 15 hours/week
-
-The demo shows:
-
-1. Student profile
-2. Career goal selection
-3. Skill-gap analysis
-4. Explainable prioritization
-5. AI Career Agent
-6. Project recommendations
-7. Personalized weekly roadmap
-8. Skill progress update
-9. Automatic roadmap adaptation
+```text
+1. Profile
+      ↓
+2. Select Target Career
+      ↓
+3. View Skill Gaps
+      ↓
+4. See Explainable Priorities
+      ↓
+5. Ask AI Career Agent
+      ↓
+6. Get Personalized Plan
+      ↓
+7. Get Project Recommendation
+      ↓
+8. Update Skill Progress
+      ↓
+9. Roadmap Automatically Adapts
+      ↓
+10. Re-assess Readiness
+```
 
 ---
 
 # 🏆 Hackathon Alignment
 
-GAPLY directly addresses the challenge of building an **AI Skill-Gap & Personalized Learning Agent**.
+GAPLY directly addresses the core requirements of **PS 05 — AI Skill-Gap & Personalized Learning Agent**.
 
-### Problem Relevance
-
-Converts a student's career goal into measurable skill requirements.
-
-### Innovation
-
-Combines skill-gap analysis, explainable prioritization, project recommendations and adaptive planning.
-
-### Technical Implementation
-
-Uses a service-oriented architecture with Prisma, SQLite, structured reasoning and dynamic roadmap generation.
-
-### Practicality
-
-Students receive actionable learning priorities instead of generic course lists.
-
-### User Experience
-
-A single dashboard connects profile, career goals, skills, AI guidance, projects and roadmap.
-
-### Adaptability
-
-Student progress feeds back into the system and influences future recommendations.
+| Requirement           | GAPLY Implementation                 |
+| --------------------- | ------------------------------------ |
+| Student Profile       | Profile & career context             |
+| Target Career         | Career Goal Engine                   |
+| Skill Gap             | Skill-Gap Analysis                   |
+| Prioritization        | Explainable Priority Engine          |
+| Personalized Learning | Adaptive Roadmap                     |
+| AI Guidance           | AI Career Agent                      |
+| Practical Application | Project Recommendations              |
+| Progress Tracking     | Assessments & Evidence               |
+| Adaptation            | Progress-driven roadmap updates      |
+| Explainability        | "Why this recommendation?" reasoning |
 
 ---
 
-# 🔐 Data & Design Principles
+# 💥 What Makes GAPLY Different
 
-GAPLY is designed around:
+GAPLY is not just:
 
-* Explainable recommendations
-* Structured student data
-* Progress-based adaptation
-* Human-in-the-loop decisions
-* Transparent skill requirements
-* No fabricated learning resources
-* Clear separation between current proficiency and required proficiency
+* ❌ A course recommendation system
+* ❌ A static roadmap generator
+* ❌ A resume analyzer
+* ❌ A chatbot giving generic career advice
 
-The system provides recommendations while keeping the student in control of their learning decisions.
+Instead, GAPLY connects:
+
+```text
+Career Goal
+     ↓
+Required Skills
+     ↓
+Current Skills
+     ↓
+Skill Gap
+     ↓
+Priority
+     ↓
+Learning Plan
+     ↓
+Projects
+     ↓
+Evidence
+     ↓
+Progress
+     ↓
+Adaptive Roadmap
+```
+
+The goal is to create a **continuous career intelligence loop** rather than a one-time recommendation.
 
 ---
 
@@ -614,7 +611,7 @@ The system provides recommendations while keeping the student in control of thei
 
 ```bash
 git clone https://github.com/itsdivyanshuno/gaply-bnb-2026.git
-cd gaply-bnb
+cd gaply-bnb-2026
 ```
 
 ## 2. Install dependencies
@@ -623,7 +620,7 @@ cd gaply-bnb
 npm install
 ```
 
-## 3. Configure environment variables
+## 3. Configure environment
 
 Create `.env`:
 
@@ -640,7 +637,7 @@ npx prisma generate
 ## 5. Seed the database
 
 ```bash
-npx tsx prisma/seed.ts
+npx prisma db seed
 ```
 
 ## 6. Start development server
@@ -649,7 +646,7 @@ npx tsx prisma/seed.ts
 npm run dev
 ```
 
-Open:
+Then open:
 
 ```text
 http://localhost:3000
@@ -657,105 +654,89 @@ http://localhost:3000
 
 ---
 
-# 🧪 Production Build Check
+# 🧪 Build Verification
 
-Before submitting the project:
+Run:
 
 ```bash
 npm run build
 ```
 
-The application should complete the Next.js production build successfully.
+The project uses Next.js production build verification to catch:
+
+* TypeScript errors
+* API issues
+* Route errors
+* Production compilation problems
 
 ---
 
-# 📑 Hackathon Presentation
+# 📈 Future Scope
 
-### GAPLY — Bit N Build '26
+GAPLY can be extended with:
 
-**Presentation:**
-[View GAPLY Hackathon Presentation](https://docs.google.com/presentation/d/1RqMjsQCQxUgrOf95PitRNWezacG7awyr4jJdRnLJoyQ/edit?usp=sharing)
-
-> Make sure the Google Slides sharing permission is set to **Anyone with the link → Viewer** before submission.
-
----
-
-# 💻 GitHub
-
-**Repository:**
-https://github.com/itsdivyanshuno/gaply-bnb-2026
-
----
-
-# 🎥 Demo Flow
-
-```text
-Profile
-   ↓
-Career Goal
-   ↓
-Skill Gap Analysis
-   ↓
-Explainable Prioritization
-   ↓
-AI Career Agent
-   ↓
-Project Recommendation
-   ↓
-Adaptive Roadmap
-   ↓
-Learn
-   ↓
-Build
-   ↓
-Update Progress
-   ↓
-Recalculate
-   ↓
-Adapt
-   ↺
-```
+* Real-time labor market skill requirements
+* Resume-to-skill extraction
+* GitHub project analysis
+* Automated project evaluation
+* Coding assessment integration
+* Learning-resource recommendations
+* Industry-specific role profiles
+* More advanced LLM reasoning
+* Mentor / human-in-the-loop feedback
+* Internship and job readiness signals
 
 ---
 
-# 🌟 Vision
+# 🎯 Vision
 
-GAPLY aims to move career preparation from:
+The long-term vision of GAPLY is to become a **personal career intelligence layer** for students.
 
-```text
-"Tell me what to learn."
-```
+Instead of asking:
 
-to:
+> **"What should I learn?"**
 
-```text
-"Understand where I am,
-understand where I want to go,
-tell me what is missing,
-explain what matters most,
-give me a path,
-and adapt that path as I improve."
-```
+Students can ask:
+
+> **"What is the next best action for my career, and why?"**
+
+GAPLY continuously uses the student's goals, skills, evidence and progress to answer that question.
 
 ---
 
 # 👨‍💻 Team
 
-### Team TechBrigade
+## Team TechBrigade
 
-**B.Tech Information Technology — 2nd Year**  
+**B.Tech Information Technology — 2nd Year**
 **Harcourt Butler Technical University (HBTU), Kanpur**
 
-| Name | Role |
-|---|---|
-| **Divyansh Shukla** | 👑 Team Leader |
-| **Shruti Singh** | Team Member |
-| **Anurag Kumar** | Team Member |
-| **Tanish Srivastava** | Team Member |
+| Name                  | Role           |
+| --------------------- | -------------- |
+| **Divyansh Shukla**   | 👑 Team Leader |
+| **Shruti Singh**      | Team Member    |
+| **Anurag Kumar**      | Team Member    |
+| **Tanish Srivastava** | Team Member    |
 
 ---
 
-## GAPLY 🚀
+# 🔗 Project Links
+
+### 💻 GitHub
+
+[View GAPLY on GitHub](https://github.com/itsdivyanshuno/gaply-bnb-2026.git)
+
+### 📑 Hackathon Presentation
+
+[View GAPLY Hackathon PPT](https://docs.google.com/presentation/d/1RqMjsQCQxUgrOf95PitRNWezacG7awyr4jJdRnLJoyQ/edit?usp=sharing)
+
+### 🎥 Hackathon Demo
+
+[Watch GAPLY Demo Video](YOUR_VIDEO_LINK_HERE)
+
+---
+
+# 🚀 GAPLY
 
 ### **Assess. Prioritize. Learn. Build. Adapt.**
 
