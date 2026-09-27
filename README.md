@@ -743,10 +743,15 @@ and adapt that path as I improve."
 
 ### Team TechBrigade
 
+**B.Tech Information Technology — 2nd Year**  
+**Harcourt Butler Technical University (HBTU), Kanpur**
 
-**Divyansh Shukla**
-B.Tech Information Technology
-HBTU Kanpur
+| Name | Role |
+|---|---|
+| **Divyansh Shukla** | 👑 Team Leader |
+| **Shruti Singh** | Team Member |
+| **Anurag Kumar** | Team Member |
+| **Tanish Srivastava** | Team Member |
 
 ---
 
