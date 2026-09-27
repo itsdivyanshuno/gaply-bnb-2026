@@ -379,7 +379,7 @@ export default function CareerGoalPage() {
               </div>
             </div>
 
-            {careerGoal.preferredTechnologies.length > 0 && (
+            {((Array.isArray(careerGoal.preferredTechnologies) && careerGoal.preferredTechnologies.length > 0) || (typeof careerGoal.preferredTechnologies === 'string' && careerGoal.preferredTechnologies.length > 0)) && (
               <div>
                 <h4 className="text-sm font-medium text-gray-700">Preferred Technologies:</h4>
                 <p className="text-sm">{Array.isArray(careerGoal.preferredTechnologies)
