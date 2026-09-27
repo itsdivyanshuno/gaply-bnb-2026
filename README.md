@@ -8,7 +8,7 @@
 
 ## 🎥 Hackathon Demo
 
-[▶️ Watch BnB Hackathon Demo Video](YOUR_VIDEO_LINK_HERE)
+[▶️ Watch BnB Hackathon Demo Video](https://drive.google.com/file/d/17PSALmUefXzFY2dJtnXcrYB79sltD_-1/view?usp=sharing)
 
 ## 📑 Hackathon Presentation
 
@@ -732,7 +732,7 @@ GAPLY continuously uses the student's goals, skills, evidence and progress to an
 
 ### 🎥 Hackathon Demo
 
-[Watch BnB Hackathon Demo Video](YOUR_VIDEO_LINK_HERE)
+[Watch BnB Hackathon Demo Video](https://drive.google.com/file/d/17PSALmUefXzFY2dJtnXcrYB79sltD_-1/view?usp=sharing)
 
 ---
 
