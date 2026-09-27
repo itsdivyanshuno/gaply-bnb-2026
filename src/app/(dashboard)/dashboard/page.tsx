@@ -44,6 +44,49 @@ type Stats = {
   needsSetup: boolean;
 };
 
+
+type AgentFocusSkill = {
+  skillId: string;
+  skillName: string;
+  current: number;
+  required: number;
+  gap: number;
+  priorityScore: number;
+  rank: number;
+  why: string;
+};
+
+type AgentPlanItem = {
+  title: string;
+  type: 'LEARN' | 'BUILD' | 'PRACTICE';
+  hours: number;
+  reason: string;
+};
+
+type AgentResponse = {
+  answer: string;
+  intent: string;
+  focusSkills: AgentFocusSkill[];
+  plan: AgentPlanItem[];
+  projects: Array<{
+    projectId: string;
+    projectName: string;
+    estimatedHours: number;
+    difficulty: string;
+    explanation: string;
+  }>;
+  context: {
+    targetRole: string;
+    weeklyAvailability: number;
+    readiness: number;
+  };
+  sourceData: {
+    skillGaps: number;
+    prioritizedSkills: number;
+    evidenceCount: number;
+  };
+};
+
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats>({
@@ -58,6 +101,15 @@ export default function DashboardPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState('');
+
+
+  const [agentQuestion, setAgentQuestion] = useState(
+    'What should I focus on this week?'
+  );
+  const [agentResponse, setAgentResponse] =
+    useState<AgentResponse | null>(null);
+  const [agentLoading, setAgentLoading] = useState(false);
+  const [agentError, setAgentError] = useState('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('gaply_user');
@@ -164,6 +216,65 @@ export default function DashboardPage() {
       });
     } finally {
       setDataLoading(false);
+    }
+  }
+
+  async function askAgent(questionOverride?: string) {
+    if (!user?.id) return;
+
+    const question = (questionOverride ?? agentQuestion).trim();
+
+    if (!question) {
+      setAgentError('Ask the Career Agent a question first.');
+      return;
+    }
+
+    setAgentQuestion(question);
+    setAgentLoading(true);
+    setAgentError('');
+
+    try {
+      const hourMatch = question.match(
+        /(\\d+(?:\\.\\d+)?)\\s*(?:hours?|hrs?|h)\\b/i
+      );
+
+      const availableHours = hourMatch
+        ? Number(hourMatch[1])
+        : undefined;
+
+      const response = await fetch('/api/agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentId: user.id,
+          question,
+          availableHours,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data?.error === 'string'
+            ? data.error
+            : 'Career Agent could not generate a response.'
+        );
+      }
+
+      setAgentResponse(data as AgentResponse);
+    } catch (error) {
+      console.error('Career Agent error:', error);
+
+      setAgentError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to reach the Career Agent.'
+      );
+    } finally {
+      setAgentLoading(false);
     }
   }
 
@@ -323,6 +434,299 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* AI Career Agent */}
+      {!stats.needsSetup && (
+        <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-white shadow-sm">
+          <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 text-white md:p-7">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-400/20">
+                    ✦
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-300">
+                      AI Career Agent
+                    </p>
+                    <h3 className="mt-0.5 text-xl font-bold tracking-tight">
+                      Your next move, explained.
+                    </h3>
+                  </div>
+                </div>
+
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400">
+                  Ask GAPLY what to learn, what to build, or why a skill is
+                  prioritized. Recommendations are generated from your target
+                  role, current skills, evidence, projects and progress.
+                </p>
+              </div>
+
+              {stats.targetRole && (
+                <div className="shrink-0 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                    Target role
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    {stats.targetRole}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <input
+                value={agentQuestion}
+                onChange={(event) => setAgentQuestion(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !agentLoading) {
+                    void askAgent();
+                  }
+                }}
+                placeholder="Ask about your career path..."
+                className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+              />
+
+              <button
+                type="button"
+                onClick={() => void askAgent()}
+                disabled={agentLoading}
+                className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {agentLoading ? 'Thinking...' : 'Ask Agent →'}
+              </button>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                'What should I focus on this week?',
+                'Why should I learn System Design?',
+                'What project should I build next?',
+                'I have 10 hours this week',
+              ].map((question) => (
+                <button
+                  key={question}
+                  type="button"
+                  onClick={() => {
+                    setAgentQuestion(question);
+                    void askAgent(question);
+                  }}
+                  disabled={agentLoading}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-indigo-400/40 hover:bg-indigo-500/10 hover:text-white disabled:opacity-50"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {agentError && (
+            <div className="border-b border-red-100 bg-red-50 px-6 py-4 text-sm text-red-700">
+              {agentError}
+            </div>
+          )}
+
+          {agentResponse ? (
+            <div className="grid gap-6 p-6 md:p-7 lg:grid-cols-[1.1fr_0.9fr]">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+                  Agent reasoning
+                </p>
+
+                <p className="mt-3 text-base font-medium leading-7 text-slate-800">
+                  {agentResponse.answer}
+                </p>
+
+                <div className="mt-5 grid grid-cols-3 gap-3">
+                  <AgentMetric
+                    label="Readiness"
+                    value={`${agentResponse.context.readiness}%`}
+                  />
+                  <AgentMetric
+                    label="Skill gaps"
+                    value={agentResponse.sourceData.skillGaps}
+                  />
+                  <AgentMetric
+                    label="Evidence"
+                    value={agentResponse.sourceData.evidenceCount}
+                  />
+                </div>
+
+                <div className="mt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-slate-950">
+                        Priority skills
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Based on gap, role importance, project relevance and
+                        assessment confidence.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {agentResponse.focusSkills.map((skill) => (
+                      <div
+                        key={skill.skillId}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-[10px] font-bold text-indigo-700">
+                                #{skill.rank}
+                              </span>
+
+                              <p className="text-sm font-bold text-slate-900">
+                                {skill.skillName}
+                              </p>
+                            </div>
+
+                            <p className="mt-2 text-xs leading-5 text-slate-500">
+                              {skill.why}
+                            </p>
+                          </div>
+
+                          <div className="shrink-0 text-right">
+                            <p className="text-sm font-bold text-slate-900">
+                              {skill.current}
+                              <span className="font-normal text-slate-400">
+                                {' '}
+                                / {skill.required}
+                              </span>
+                            </p>
+                            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                              current / target
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-500"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                (skill.current / Math.max(skill.required, 1)) *
+                                  100
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+                    Recommended plan
+                  </p>
+
+                  <p className="mt-1 text-lg font-bold text-slate-950">
+                    {agentResponse.context.weeklyAvailability} hours available
+                  </p>
+
+                  <div className="mt-4 space-y-3">
+                    {agentResponse.plan.map((item, index) => (
+                      <div
+                        key={`${item.title}-${index}`}
+                        className="flex gap-3 rounded-xl bg-white p-3.5 shadow-sm"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-xs font-bold text-indigo-600">
+                          {index + 1}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold text-slate-900">
+                              {item.title}
+                            </p>
+
+                            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                              {item.hours}h
+                            </span>
+                          </div>
+
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            {item.reason}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {agentResponse.projects.length > 0 && (
+                  <div className="mt-5">
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+                          Project match
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-slate-950">
+                          Build evidence for your gaps
+                        </p>
+                      </div>
+
+                      <Link
+                        href="/dashboard/projects"
+                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                      >
+                        View all →
+                      </Link>
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                      {agentResponse.projects.slice(0, 2).map((project) => (
+                        <div
+                          key={project.projectId}
+                          className="rounded-xl border border-slate-200 bg-white p-3.5"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-semibold text-slate-900">
+                              {project.projectName}
+                            </p>
+
+                            <span className="text-xs text-slate-400">
+                              {project.estimatedHours}h · {project.difficulty}
+                            </span>
+                          </div>
+
+                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                            {project.explanation}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 md:p-7">
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
+                  ✦
+                </div>
+
+                <p className="mt-3 text-sm font-semibold text-slate-900">
+                  Ask GAPLY what to do next.
+                </p>
+
+                <p className="mx-auto mt-1 max-w-lg text-xs leading-5 text-slate-500">
+                  The agent will use your actual skill gaps, role requirements,
+                  evidence and project matches to explain its recommendation.
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Setup prompt */}
       {stats.needsSetup && !dataLoading && (
         <section className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-6">
@@ -480,6 +884,23 @@ export default function DashboardPage() {
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+function AgentMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-bold text-slate-950">{value}</p>
     </div>
   );
 }

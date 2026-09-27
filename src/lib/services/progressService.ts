@@ -79,6 +79,11 @@ export class ProgressService {
     });
     const requiredProficiency = roleSkill ? roleSkill.requiredProficiency : 0;
 
+    // Capture the complete skill-gap state before making the update.
+    const gapAnalysisBefore = await skillGapService.analyzeSkillGaps(
+      update.studentId
+    );
+
     // Calculate gap before update
     const gapBefore = oldProficiency - requiredProficiency;
 
@@ -112,9 +117,10 @@ export class ProgressService {
     const proficiencyChange = update.newProficiency - oldProficiency;
     const gapChange = gapAfter - gapBefore; // Negative = improvement (gap decreased)
 
-    // Get gap analysis before and after
-    const gapAnalysisBefore = await skillGapService.analyzeSkillGaps(update.studentId);
-    const gapAnalysisAfter = await skillGapService.analyzeSkillGaps(update.studentId);
+    // Recalculate after the skill update so we can measure the actual impact.
+    const gapAnalysisAfter = await skillGapService.analyzeSkillGaps(
+      update.studentId
+    );
 
     // Calculate readiness impact
     const readinessBefore = gapAnalysisBefore.overallReadiness;

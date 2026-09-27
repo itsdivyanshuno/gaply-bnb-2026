@@ -157,9 +157,15 @@ export class PrioritizationService {
       let explanation = `Prioritized because: `;
       const factors = [];
 
-      if (normalizedGapSize > 0.7) factors.push(`large skill gap (${Math.abs(gap.gap)} points)`);
-      else if (normalizedGapSize > 0.4) factors.push(`moderate skill gap (${Math.abs(gap.gap)} points)`);
-      else factors.push(`small skill gap (${Math.abs(gap.gap)} points)`);
+      const absoluteGap = Math.abs(gap.gap);
+
+      if (absoluteGap >= 40) {
+        factors.push(`large skill gap (${absoluteGap} points)`);
+      } else if (absoluteGap >= 20) {
+        factors.push(`moderate skill gap (${absoluteGap} points)`);
+      } else {
+        factors.push(`small skill gap (${absoluteGap} points)`);
+      }
 
       if (normalizedRoleImportance > 0.8) factors.push(`high importance for role (${roleSkill.importance}/100)`);
       else if (normalizedRoleImportance > 0.6) factors.push(`moderate importance for role (${roleSkill.importance}/100)`);
