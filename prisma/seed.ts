@@ -358,12 +358,12 @@ async function main() {
           },
         },
         update: {
-          relevance,
+          relevance: Number(relevance),
         },
         create: {
           projectId: project.id,
           skillId: skills[skillName].id,
-          relevance,
+          relevance: Number(relevance),
         },
       });
     }

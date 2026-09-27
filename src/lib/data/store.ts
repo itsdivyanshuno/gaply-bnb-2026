@@ -22,7 +22,7 @@ export type {
 
 // Prisma client singleton
 const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL!,
+  url: "file:/home/divyansh/bnb/prisma/dev.db",
 });
 
 const prisma = new PrismaClient({ adapter });
